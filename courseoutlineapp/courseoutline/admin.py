@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 
-from courseoutline.models import Course, Category, Outline, Lesson
+from courseoutline.models import Course, Category, Outline, Lesson, Lecturer, Evaluation, Student
 from django import forms
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 import cloudinary
@@ -13,6 +13,7 @@ class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
         fields = '__all__'
+
 
 class CourseAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'active', 'created_date', 'updated_date']
@@ -31,9 +32,13 @@ class CourseAdmin(admin.ModelAdmin):
         css = {
             'all': ['/static/css/style.css']
         }
+
+
 admin.site.register(Course)
 admin.site.register(Category)
 admin.site.register(Outline)
 admin.site.register(Lesson)
-
+admin.site.register(Lecturer)
+admin.site.register(Evaluation)
+admin.site.register(Student)
 # Register your models here.
