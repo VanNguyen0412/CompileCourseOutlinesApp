@@ -41,4 +41,5 @@ admin.site.register(Lesson)
 admin.site.register(Lecturer)
 admin.site.register(Evaluation)
 admin.site.register(Student)
+
 # Register your models here.
