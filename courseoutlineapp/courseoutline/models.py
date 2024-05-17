@@ -33,6 +33,9 @@ class User(AbstractUser):
     def is_lecturer(self):
         return self.role == 'lecturer'
 
+    def is_student(self):
+        return self.role == 'student'
+
 
 class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -42,7 +45,7 @@ class Category(models.Model):
 
 
 class Evaluation(BaseModel):
-    percentage = models.CharField(max_length=255)
+    percentage = models.FloatField()
     method = models.CharField(max_length=255)
     note = models.CharField(max_length=255)
 
@@ -50,7 +53,7 @@ class Evaluation(BaseModel):
 class Lecturer(models.Model):
     name = models.CharField(max_length=255)
     position = models.CharField(max_length=255)
-    email = models.CharField(max_length=255)
+    is_approved = models.BooleanField(default=False) # nhớ thêm vào
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -67,7 +70,7 @@ class Lesson(BaseModel):
 
 
 class Course(BaseModel):
-    year = models.IntegerField()
+    year = models.IntegerField(unique=True)
 
     lessons = models.ManyToManyField(Lesson)
 
@@ -76,6 +79,7 @@ class Outline(BaseModel):
     name = models.CharField(max_length=255)
     credit = models.IntegerField()
     overview = RichTextField()
+    is_approved = models.BooleanField(default=False) # nhớ thêm vào
     evaluation = models.ManyToManyField(Evaluation)
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     lecturer = models.ForeignKey(Lecturer, on_delete=models.CASCADE)
@@ -89,6 +93,7 @@ class Student(models.Model):
     fullname = models.CharField(max_length=255)
     age = models.CharField(max_length=2)
     sex = models.BooleanField(default=True) #true is female, false is male
+    is_approved = models.BooleanField(default=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.PROTECT)
     lessons = models.ManyToManyField(Lesson)
@@ -104,7 +109,7 @@ class Interaction(BaseModel):
 
 
 class Comment(Interaction):
-    content = models.CharField(max_length=255)
+    content = models.TextField()
 
 
 class Chat(BaseModel):
