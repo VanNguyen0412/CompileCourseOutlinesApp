@@ -36,8 +36,8 @@ SECRET_KEY = 'django-insecure-w$uvi5x&hgix^x1_i1!9@rpn*&09&v=k_a_-ve*kka*c05oeq2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.1.15']
-# ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = ['192.168.1.15']
+ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -53,11 +53,7 @@ INSTALLED_APPS = [
     'ckeditor_uploader',
     'rest_framework',
     'drf_yasg',
-<<<<<<< HEAD
-    'oauth2_provider',
-=======
     'oauth2_provider'
->>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
 ]
 
 REST_FRAMEWORK = {
@@ -66,10 +62,6 @@ REST_FRAMEWORK = {
     )
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
 CKEDITOR_UPLOAD_PATH = "ckeditors/images/"
 
 MIDDLEWARE = [
@@ -154,11 +146,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-<<<<<<< HEAD
-CLIENT_ID='D3Tks2a5A3RdqoAssHWpMFv2AEBA8Fm5HQv2WIkf'
-CLIENT_SECRET ='PMwTczu8fMsZ7g2fqaXbYtBbXXZGcrRmisIuO0UuBTbAU75pyCGxNE0IeRhrfs8PvrWd8v57q3MAeuPOWqNaz8w7aOxbvqKdDGtX12MiUoWaYAChzkO2hTpD265ipVNe'
-=======
 
 CLIENT_ID = 'nTTIzOJqAg7ZULobL0pkQmQKrA8utLBF9Wqlhivo'
 CLIENT_SECRET = 'EPwk201nO5Al26UE8CuqyTM3yvXGfrnx5PafCwoTTG5lXFZ3uUb5NDdSsg7C0ysYIPdrr56wIcoXp9Fi0W1oaViqiVMyFQuMmq1rFjwPm7Y9Wv5TkyTySAdug43dGxZ0'
->>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5

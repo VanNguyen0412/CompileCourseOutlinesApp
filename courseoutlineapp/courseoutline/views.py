@@ -1,12 +1,6 @@
-<<<<<<< HEAD
-from rest_framework import viewsets, generics, parsers, status, permissions
-from django.contrib.auth import get_user_model
-from django.db import transaction
-=======
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework import viewsets, generics, parsers, permissions, status
->>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
 from rest_framework.exceptions import PermissionDenied
 from courseoutline.models import *
 from courseoutline import serializers, paginators, perms
@@ -29,7 +23,6 @@ class LessonViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = Lesson.objects.filter(active=True)
     serializer_class = serializers.LessonSerializer
     pagination_class = paginators.ItemPaginator
-<<<<<<< HEAD
 
     def get_queryset(self):
         queryset = self.queryset
@@ -39,8 +32,6 @@ class LessonViewSet(viewsets.ViewSet, generics.ListAPIView):
             queryset = queryset.filter(category_id=cate_id)
         return queryset
 
-=======
->>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
     def get_permissions(self):
         if self.action in ['create_lesson']:
             return [permissions.IsAuthenticated()]
@@ -51,11 +42,7 @@ class LessonViewSet(viewsets.ViewSet, generics.ListAPIView):
         if not request.user.is_lecturer():
             return Response({"error": "Only lecturers can create lessons."},
                             status=status.HTTP_403_FORBIDDEN)
-<<<<<<< HEAD
         lecturer = request.user.get_lecturer_profile()
-=======
-        lecturer = request.user.lecturer
->>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
 
         mutable_data = request.data.copy()
         mutable_data['lecturer'] = lecturer.id
@@ -84,11 +71,8 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIV
         if not request.user.is_lecturer():
             return Response({"error": "Only lecturers can create outlines."},
                             status=status.HTTP_403_FORBIDDEN)
-<<<<<<< HEAD
+
         lecturer = request.user.get_lecturer_profile()
-=======
-        lecturer = request.user.lecturer
->>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
 
         serializer = serializers.CreateOutlineSerializer(data=request.data)
         if serializer.is_valid():
@@ -99,13 +83,12 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIV
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-<<<<<<< HEAD
     @action(methods=['patch'], url_path='update', detail=True)
-    def update_image(self, request,pk):
+    def update_image(self, request, pk):
         outline = self.get_object()
-        # if outline.lecturer != request.user.get_lecturer_profile():
-        #     return Response({"error": "Only the lecturer who created the outline can update the image."},
-        #                     status=status.HTTP_403_FORBIDDEN)
+        if outline.lecturer != request.user.get_lecturer_profile():
+            return Response({"error": "Only the lecturer who created the outline can update the image."},
+                            status=status.HTTP_403_FORBIDDEN)
 
         image = request.data.get('image')
         if not image:
@@ -114,16 +97,6 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIV
         outline.image = image
         outline.save()
         return Response({"message": "Image updated successfully."}, status=status.HTTP_200_OK)
-=======
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        if serializer.is_valid():
-            self.perform_update(serializer)
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
->>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
 
     def get_queryset(self):
         queryset = self.queryset
@@ -166,11 +139,8 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIV
             raise PermissionDenied("Only students can add comments.")
 
         # Lấy thông tin sinh viên hiện đang đăng nhập từ đối tượng request.user
-<<<<<<< HEAD
+
         student = request.user.get_student_profile()
-=======
-        student = request.user.student
->>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
 
         outline = self.get_object()
         mutable_data = request.data.copy()
@@ -194,15 +164,10 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIV
                             status=status.HTTP_403_FORBIDDEN)
 
         # Lấy thông tin giảng viên hiện đang đăng nhập
-<<<<<<< HEAD
+
         lecturer = request.user.get_lecturer_profile()
 
         if outline.lecturer != request.user.get_lecturer_profile():
-=======
-        lecturer = request.user
-
-        if outline.lecturer != request.user.lecturer:
->>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
             return Response({"error": "You can only add evaluation to outlines you have created."},
                             status=status.HTTP_403_FORBIDDEN)
 
@@ -277,15 +242,9 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIV
                             status=status.HTTP_403_FORBIDDEN)
 
         # Lấy thông tin giảng viên hiện đang đăng nhập
-<<<<<<< HEAD
         lecturer = request.user.get_lecturer_profile()
 
         if outline.lecturer != request.user.get_lecturer_profile():
-=======
-        lecturer = request.user
-
-        if outline.lecturer != request.user.lecturer:
->>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
             return Response({"error": "You can only add course to outlines you have created."},
                             status=status.HTTP_403_FORBIDDEN)
 
@@ -340,7 +299,6 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIV
         return Response(serializer.data)
 
 
-<<<<<<< HEAD
 class AccountViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
     queryset = Account.objects.filter(is_active=True)
     serializer_class = serializers.AccountSerializer
@@ -441,6 +399,7 @@ class ApprovalViewSet(viewsets.ViewSet, generics.ListAPIView):
         # Trả về thông báo thành công
         return Response(data={"message": "Cập nhật mật khẩu và avatar thành công."}, status=status.HTTP_200_OK)
 
+
 class CommentViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateAPIView):
     queryset = Comment.objects.all()
     serializer_class = serializers.CommentSerializer
@@ -468,59 +427,3 @@ class CommentViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateA
             self.perform_update(serializer)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-=======
-class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
-    queryset = User.objects.filter(is_active=True)
-    serializer_class = serializers.UserSerializer
-    parser_classes = [parsers.MultiPartParser, ]
-
-    def get_permissions(self):
-        if self.action in ['current_user']:
-            return [permissions.IsAuthenticated()]
-
-        return [permissions.AllowAny()]
-
-    @action(methods=['get', 'patch'], url_path='current-user', detail=False)
-    def current_user(self, request):
-        user = request.user
-        if request.method.__eq__('PATCH'):
-            for k, v in request.data.items():
-                setattr(user, k, v)
-            user.save()
-
-        return Response(serializers.UserSerializer(user).data)
-
->>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
-
-
-<<<<<<< HEAD
-=======
-
-class CommentViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateAPIView):
-    queryset = Comment.objects.all()
-    serializer_class = serializers.CommentSerializer
-    permission_classes = [IsAuthenticated, perms.IsOwnerOrReadOnly]
-
-    def perform_create(self, serializer):
-        serializer.save(student=self.request.user.student)
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        if instance.student.user != request.user:
-            return Response({"error": "You do not have permission to delete this comment."},
-                            status=status.HTTP_403_FORBIDDEN)
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        if instance.student.user != request.user:
-            return Response({"error": "You do not have permission to edit this comment."},
-                            status=status.HTTP_403_FORBIDDEN)
-
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            self.perform_update(serializer)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
->>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
