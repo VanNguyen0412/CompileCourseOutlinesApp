@@ -47,6 +47,10 @@ class Account(AbstractUser):
 
     def is_student(self):
         return self.role == 'student'
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
 
     def get_lecturer_profile(self):
         try:
@@ -100,6 +104,14 @@ class Evaluation(BaseModel):
 
 class Lecturer(User):
     position = models.CharField(max_length=255)
+<<<<<<< HEAD
+=======
+    is_approved = models.BooleanField(default=False) # nhớ thêm vào
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+>>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
 
 
 class Lesson(BaseModel):
@@ -121,8 +133,12 @@ class Outline(BaseModel):
     name = models.CharField(max_length=255)
     credit = models.IntegerField()
     overview = RichTextField()
+<<<<<<< HEAD
     image = CloudinaryField(null=True)
     is_approved = models.BooleanField(default=False)  # nhớ thêm vào
+=======
+    is_approved = models.BooleanField(default=False) # nhớ thêm vào
+>>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
     evaluation = models.ManyToManyField(Evaluation)
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     lecturer = models.ForeignKey(Lecturer, on_delete=models.CASCADE)
@@ -132,10 +148,22 @@ class Outline(BaseModel):
         return self.name
 
 
+<<<<<<< HEAD
 class Student(User):
     course = models.ForeignKey(Course, null=True, blank=True, on_delete=models.PROTECT)
     lessons = models.ManyToManyField(Lesson, blank=True)
     outline = models.ManyToManyField(Outline, blank=True)
+=======
+class Student(models.Model):
+    fullname = models.CharField(max_length=255)
+    age = models.CharField(max_length=2)
+    sex = models.BooleanField(default=True) #true is female, false is male
+    is_approved = models.BooleanField(default=False)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.PROTECT)
+    lessons = models.ManyToManyField(Lesson)
+    outline = models.ManyToManyField(Outline)
+>>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
 
 
 class Interaction(BaseModel):

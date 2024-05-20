@@ -16,9 +16,15 @@ class OutlineForm(forms.ModelForm):
 
 
 class LecturerAdmin(admin.ModelAdmin):
+<<<<<<< HEAD
     list_display = ['id','first_name', 'last_name','age','code', 'position', 'account']
     search_fields = ['last_name']
     list_filter = ['last_name']
+=======
+    list_display = ['id', 'name', 'position', 'user']
+    search_fields = ['name']
+    list_filter = ['name']
+>>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
 
 
 class OutlineAdmin(admin.ModelAdmin):
@@ -36,9 +42,15 @@ class OutlineAdmin(admin.ModelAdmin):
 
 
 class StudentAdmin(admin.ModelAdmin):
+<<<<<<< HEAD
     list_display = ['id', 'first_name','last_name', 'age', 'code', 'account']
     search_fields = ['last_name']
     list_filter = ['last_name', 'age']
+=======
+    list_display = ['id', 'fullname', 'age', 'sex', 'is_approved', 'user']
+    search_fields = ['fullname']
+    list_filter = ['fullname', 'age']
+>>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
 
 
 class LessonAdmin(admin.ModelAdmin):
@@ -52,11 +64,16 @@ class CommentAdmin(admin.ModelAdmin):
     search_fields = ['student_name']
 
     def student_name(self, obj):
+<<<<<<< HEAD
         return obj.student.last_name
     student_name.short_description = 'Student'
 
 class CourseAdmin(admin.ModelAdmin):
     list_display = ['id','year']
+=======
+        return obj.student.fullname
+    student_name.short_description = 'Student'
+>>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
 
 
 admin.site.register(Course, CourseAdmin)
@@ -67,4 +84,8 @@ admin.site.register(Lecturer, LecturerAdmin)
 admin.site.register(Evaluation)
 admin.site.register(Student, StudentAdmin)
 admin.site.register(Comment, CommentAdmin)
+<<<<<<< HEAD
 # Register your models here.
+=======
+# Register your models here.
+>>>>>>> 5d0ca0573ab2456c38c12986f1a769647c6f4ca5
