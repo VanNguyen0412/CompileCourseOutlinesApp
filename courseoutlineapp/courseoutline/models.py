@@ -24,9 +24,9 @@ class Account(AbstractUser):
     is_approved = models.BooleanField(default=False)
 
     class Role(models.TextChoices):
-        ADMIN = 'admin', 'Quan tri vien'
-        LECTURER = 'lecturer', 'Giang vien'
-        STUDENT = 'student', 'Sinh vien'
+        ADMIN = 'admin', 'Quản trị viên'
+        LECTURER = 'lecturer', 'Giảng viên'
+        STUDENT = 'student', 'Sinh viên'
 
     # Trường mở rộng để lưu vai trò của người dùng
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.STUDENT)
@@ -47,6 +47,18 @@ class Account(AbstractUser):
 
     def is_student(self):
         return self.role == 'student'
+
+    def get_lecturer_profile(self):
+        try:
+            return self.lecturers.get()
+        except Lecturer.DoesNotExist:
+            return None
+
+    def get_student_profile(self):
+        try:
+            return self.students.get()
+        except Student.DoesNotExist:
+            return None
 
 
 class User(BaseModel):
@@ -81,7 +93,7 @@ class Category(BaseModel):
 
 
 class Evaluation(BaseModel):
-    percentage = models.CharField(max_length=255)
+    percentage = models.FloatField()
     method = models.CharField(max_length=255)
     note = models.CharField(max_length=255)
 
@@ -100,7 +112,7 @@ class Lesson(BaseModel):
 
 
 class Course(BaseModel):
-    year = models.IntegerField()
+    year = models.IntegerField(unique=True)
 
     lessons = models.ManyToManyField(Lesson)
 
@@ -109,6 +121,8 @@ class Outline(BaseModel):
     name = models.CharField(max_length=255)
     credit = models.IntegerField()
     overview = RichTextField()
+    image = CloudinaryField(null=True)
+    is_approved = models.BooleanField(default=False)  # nhớ thêm vào
     evaluation = models.ManyToManyField(Evaluation)
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     lecturer = models.ForeignKey(Lecturer, on_delete=models.CASCADE)
@@ -133,7 +147,7 @@ class Interaction(BaseModel):
 
 
 class Comment(Interaction):
-    content = models.CharField(max_length=255)
+    content = models.TextField()
 
 
 class Chat(BaseModel):

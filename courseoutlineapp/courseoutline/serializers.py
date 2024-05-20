@@ -1,12 +1,21 @@
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
-from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
-
-from courseoutline.models import Category, Course, Outline, Student, Lesson, Lecturer, Account, Approval
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
+from rest_framework import serializers
+from courseoutline.models import *
 
 User = get_user_model()
+
+
+class ItemSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        req = super().to_representation(instance)
+        req['image'] = instance.image.url
+
+        return req
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -18,12 +27,13 @@ class CategorySerializer(serializers.ModelSerializer):
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
-        fields = ['id', 'year']
+        fields = ['year']
 
 
 class AccountSerializer(serializers.ModelSerializer):
     code = serializers.IntegerField(required=True, write_only=True)
-    email = serializers.EmailField(required=True)
+
+    # email = serializers.EmailField(required=True)
 
     class Meta:
         model = Account
@@ -53,7 +63,7 @@ class LecturerAccountSerializer(AccountSerializer):
         extra_kwargs = AccountSerializer.Meta.extra_kwargs
 
     def create(self, validated_data):
-        code = f'{validated_data.pop('code'):06d}'
+        code = f'{validated_data.pop("code"):06d}'
         lecturer = get_object_or_404(Lecturer, code=code)
         validated_data['role'] = Account.Role.LECTURER
         account = Account(**validated_data)
@@ -62,6 +72,12 @@ class LecturerAccountSerializer(AccountSerializer):
         lecturer.account = account
         lecturer.save()
         return account
+
+
+class EvaluationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Evaluation
+        fields = ['id', 'percentage', 'method']
 
 
 class StudentAccountSerializer(AccountSerializer):
@@ -119,12 +135,48 @@ class ApprovalSerializer(AccountSerializer):
 
 
 class OutlineSerializer(serializers.ModelSerializer):
+    course = CourseSerializer(many=True)
+    evaluation = EvaluationSerializer(many=True)
+
+    def to_representation(self, instance):
+        req = super().to_representation(instance)
+        req['image'] = instance.image.url
+
+        return req
+
     class Meta:
         model = Outline
-        fields = '__all__'
+        fields = ['id', 'name', 'credit', 'overview', 'created_date', 'image', 'lecturer', 'course',
+                  'lesson', 'evaluation']
+        read_only_fields = ['lecturer']
+
+    def create(self, validated_data):
+        raise NotImplementedError("Use OutlineViewSet.create_outline to create outlines.")
 
 
 class LessonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
         fields = '__all__'
+        read_only_fields = ['lecturer', 'created_date', 'updated_date']
+
+
+class OutlineApprovalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Outline
+        fields = ['is_approved']
+
+
+class CreateOutlineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Outline
+        fields = ['id', 'name', 'credit', 'overview', 'created_date', 'updated_date', 'lecturer',
+                  'lesson']
+        read_only_fields = ['lecturer']
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['id', 'content', 'outline', 'created_date', 'updated_date', 'student']
+        read_only_fields = ['student', 'outline']

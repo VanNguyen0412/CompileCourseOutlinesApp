@@ -36,7 +36,8 @@ SECRET_KEY = 'django-insecure-w$uvi5x&hgix^x1_i1!9@rpn*&09&v=k_a_-ve*kka*c05oeq2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.1.15']
+# ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -54,6 +55,13 @@ INSTALLED_APPS = [
     'drf_yasg',
     'oauth2_provider',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    )
+}
+
 
 CKEDITOR_UPLOAD_PATH = "ckeditors/images/"
 
@@ -93,9 +101,9 @@ WSGI_APPLICATION = 'courseoutlineapp.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'courseoutlinedb',
+        'NAME': 'outlinedb',
         'USER': 'root',
-        'PASSWORD': 'hoangnhi01',
+        'PASSWORD': 'Admin@123',
         'HOST': ''  # mặc định localhost
     }
 }
@@ -138,3 +146,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CLIENT_ID='D3Tks2a5A3RdqoAssHWpMFv2AEBA8Fm5HQv2WIkf'
+CLIENT_SECRET ='PMwTczu8fMsZ7g2fqaXbYtBbXXZGcrRmisIuO0UuBTbAU75pyCGxNE0IeRhrfs8PvrWd8v57q3MAeuPOWqNaz8w7aOxbvqKdDGtX12MiUoWaYAChzkO2hTpD265ipVNe'
