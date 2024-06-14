@@ -158,3 +158,4 @@ class Chat(BaseModel):
 class Approval(BaseModel):
     is_approved = models.BooleanField(default=False)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, unique=True)
+

@@ -36,8 +36,8 @@ SECRET_KEY = 'django-insecure-w$uvi5x&hgix^x1_i1!9@rpn*&09&v=k_a_-ve*kka*c05oeq2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# ALLOWED_HOSTS = ['192.168.1.15']
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.1.4']
+# ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -75,6 +75,10 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'courseoutlineapp.urls'
+
+OAUTH2_PROVIDER = {
+    'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore'
+}
 
 TEMPLATES = [
     {
@@ -149,3 +153,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CLIENT_ID = 'nTTIzOJqAg7ZULobL0pkQmQKrA8utLBF9Wqlhivo'
 CLIENT_SECRET = 'EPwk201nO5Al26UE8CuqyTM3yvXGfrnx5PafCwoTTG5lXFZ3uUb5NDdSsg7C0ysYIPdrr56wIcoXp9Fi0W1oaViqiVMyFQuMmq1rFjwPm7Y9Wv5TkyTySAdug43dGxZ0'
+# https://pictogrammers.com/library/mdi/
+# https://codepen.io/enxaneta/full/adLPwv/

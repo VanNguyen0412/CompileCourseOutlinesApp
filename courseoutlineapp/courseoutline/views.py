@@ -7,6 +7,13 @@ from courseoutline import serializers, paginators, perms
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Image, Table, TableStyle, Spacer
+from io import BytesIO
+from django.http import HttpResponse
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -19,13 +26,17 @@ class CourseViewSet(viewsets.ViewSet, generics.ListAPIView):
     serializer_class = serializers.CourseSerializer
 
 
-class LessonViewSet(viewsets.ViewSet, generics.ListAPIView):
+class LessonViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView):
     queryset = Lesson.objects.filter(active=True)
     serializer_class = serializers.LessonSerializer
     pagination_class = paginators.ItemPaginator
 
     def get_queryset(self):
         queryset = self.queryset
+
+        q = self.request.query_params.get('q')
+        if q:
+            queryset = queryset.filter(subject__icontains=q)
 
         cate_id = self.request.query_params.get('category_id')
         if cate_id:
@@ -47,17 +58,38 @@ class LessonViewSet(viewsets.ViewSet, generics.ListAPIView):
         mutable_data = request.data.copy()
         mutable_data['lecturer'] = lecturer.id
 
-        serializer = serializers.LessonSerializer(data=mutable_data)
+        serializer = serializers.LessonCreateSerializer(data=mutable_data)
         if serializer.is_valid():
             serializer.save(lecturer=lecturer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(methods=['get'], url_path='outlines', detail=True)
+    def get_outline(self, request, pk):
+        outlines = self.get_object().outline_set.filter(active=True)
 
-class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIView):
+        q = request.query_params.get('q')
+        if q:
+            outlines = outlines.filter(subject__icontains=q)
+
+        return Response(serializers.OutlineSerializer(outlines, many=True).data,
+                        status=status.HTTP_200_OK)
+
+    @action(methods=['get'], url_path='courses', detail=True)
+    def get_courses_for_lesson(request, self, pk):
+        try:
+            lesson = Lesson.objects.get(id=pk)
+            courses = lesson.course_set.all()  # Lấy tất cả các khóa học liên quan đến bài học
+            serializer = serializers.CourseSerializer(courses, many=True)
+            return Response(serializer.data)
+        except Lesson.DoesNotExist:
+            return Response({'error': 'Lesson not found'}, status=404)
+
+
+class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Outline.objects.filter(active=True)
     serializer_class = serializers.OutlineSerializer
-    pagination_class = paginators.ItemPaginator
+    pagination_class = paginators.OutlinePaginator
 
     def get_permissions(self):
         if self.action in ['add_comment', 'add_evaluation', 'create_outline', 'add_course']:
@@ -83,21 +115,6 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIV
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['patch'], url_path='update', detail=True)
-    def update_image(self, request, pk):
-        outline = self.get_object()
-        if outline.lecturer != request.user.get_lecturer_profile():
-            return Response({"error": "Only the lecturer who created the outline can update the image."},
-                            status=status.HTTP_403_FORBIDDEN)
-
-        image = request.data.get('image')
-        if not image:
-            return Response({"error": "No image provided."}, status=status.HTTP_400_BAD_REQUEST)
-
-        outline.image = image
-        outline.save()
-        return Response({"message": "Image updated successfully."}, status=status.HTTP_200_OK)
-
     def get_queryset(self):
         queryset = self.queryset
 
@@ -112,7 +129,7 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIV
 
             lecturer = self.request.query_params.get('lecturer')  # tìm đề cương theo tên giảng viên
             if lecturer:
-                queryset = queryset.filter(lecturer__name__icontains=lecturer)
+                queryset = queryset.filter(lecturer__lastpyp_name__icontains=lecturer)
 
             course = self.request.query_params.get('course')  # tìm đề cương theo khóa học
             if course:
@@ -148,7 +165,7 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIV
         # Thêm trường student vào dữ liệu request trước khi tạo comment
         mutable_data['student'] = student.id
         # Tạo một serializer mới và truyền đối tượng Student vào trường student
-        serializer = serializers.CommentSerializer(data=mutable_data)
+        serializer = serializers.AddCommentSerializer(data=mutable_data)
         if serializer.is_valid():
             # Lưu comment với đối tượng Student đã được tạo
             serializer.save(outline=outline, student=student)
@@ -197,12 +214,11 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIV
         current_total_percentage = sum(evaluation.percentage for evaluation in existing_evaluations)
 
         new_total_percentage = current_total_percentage + total_new_percentage
-
         if new_total_percentage != 100:
             return Response({"error": "Total percentage of all evaluations must equal 100."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        if not (2 <= len(existing_evaluations) + len(evaluations) <= 5):
+        if not (1 <= len(existing_evaluations) + len(evaluations) <= 5):
             return Response({"error": "Total number of evaluations must be between 2 and 5."},
                             status=status.HTTP_400_BAD_REQUEST)
 
@@ -252,6 +268,11 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIV
         if not courses:
             return Response({"error": "No course provided."}, status=status.HTTP_400_BAD_REQUEST)
 
+        existing_course = outline.course.all()
+        if not (len(existing_course) + len(courses) <= 2):
+            return Response({"error": "Một đề cương chỉ tối đa hai khóa học."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         new_course = []
         for course_data in courses:
             # Lấy thông tin của đánh giá từ dữ liệu yêu cầu
@@ -291,10 +312,123 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIV
             return Response({"detail": "Outline approved successfully."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['get'], url_path='download', detail=False)
-    def download_outline(self, request):
+    @action(methods=['get'], url_path='download', detail=True)
+    def download_outline(self, request, pk=None):
+        try:
+            outline = Outline.objects.get(pk=pk)
+        except Outline.DoesNotExist:
+            return Response({"error": "Outline not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if not outline.is_approved:
+            return Response({"error": "Outline has not been approved yet"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Create the PDF
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4,
+                                rightMargin=72, leftMargin=72,
+                                topMargin=72, bottomMargin=18)
+
+        styles = getSampleStyleSheet()
+        elements = []
+
+        elements.append(Paragraph("TRUONG DAI HOC MO THANH PHO HO CHI MINH", styles['Title']))
+        elements.append(Paragraph("HO CHI MINH OPEN UNIVERSITY", styles['Title']))
+
+        elements.append(Spacer(1,12))
+        elements.append(Paragraph("DE CUONG MON HOC COURSE OUTLINE", styles['Title']))
+
+        elements.append(Spacer(1, 10))
+
+        # Title
+        elements.append(Paragraph(outline.name, styles['Title']))
+
+        elements.append(Spacer(1, 12))
+
+        # Overview
+        elements.append(Paragraph(f"1. Mo ta mon hoc/Lesson overview:", styles['Heading3']))
+
+        elements.append(Spacer(1, 5))
+        elements.append(Paragraph(f"{outline.overview}", styles['BodyText']))
+
+        elements.append(Spacer(1, 8))
+
+        elements.append(Paragraph(f"2. So tin chi/Credits: {outline.credit}", styles['Heading3']))
+        elements.append(Spacer(1, 8))
+
+        elements.append(Paragraph(f"2. Giang vien:", styles['Heading3']))
+
+        elements.append(Spacer(1, 5))
+        elements.append(Paragraph(f"a. Giang vien phu trach: {outline.lecturer}", styles['BodyText']))
+
+        elements.append(Spacer(1, 5))
+        elements.append(Paragraph(f"b. Chuc vu giang vien: {outline.lecturer.position}", styles['BodyText']))
+
+        elements.append(Spacer(1, 8))
+
+        elements.append(Paragraph(f"3.Hinh anh/Image: ", styles['Heading3']))
+        # Image
+        if outline.image:
+            img = Image(outline.image.url)
+            img.drawHeight = 2 * inch
+            img.drawWidth = 2 * inch
+            elements.append(img)
+
+        elements.append(Spacer(1, 12))
+        elements.append(Paragraph(f"4. Đánh giá môn học/ Student assessment: ", styles['Heading3']))
+        elements.append(Spacer(1, 8))
+
+        # Evaluations
+        if outline.evaluation.exists():
+            data = [["Thành phần đánh giá", "Phần trăm"]]
+            for evaluation in outline.evaluation.all():
+                data.append([evaluation.method, evaluation.percentage])
+
+            table = Table(data, colWidths=[4 * inch, 1 * inch])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ]))
+            elements.append(table)
+
+        elements.append(Paragraph(f"5.Khóa học/Course: ", styles['Heading3']))
+        elements.append(Spacer(1, 8))
+
+        # Course
+        if outline.course.exists():
+            data = [["Khóa học", "Khoa"]]
+            for course in outline.course.all():
+                data.append([course.year, f"Công nghệ thông tin"])
+
+            table = Table(data, colWidths=[2 * inch, 3 * inch])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ]))
+            elements.append(table)
+
+        # Build PDF
+        doc.build(elements)
+
+        buffer.seek(0)
+
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{outline.name}.pdf"'
+        return response
+
+    @action(methods=['get'], url_path='noapprove', detail=False)
+    def outline_noapprove(self, request):
         # Lấy danh sách các đề cương đã được xét duyệt
-        approved_outlines = self.queryset.filter(is_approved=True)
+        approved_outlines = self.queryset.filter(is_approved=False)
         serializer = self.get_serializer(approved_outlines, many=True)
         return Response(serializer.data)
 
@@ -329,6 +463,11 @@ class AccountViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
         account.save()
         return Response(data={'message': f'Tài khoản của {account.username} đã được xét duyệt thành công.'},
                         status=status.HTTP_200_OK)
+
+    @action(methods=['get', 'patch'], url_path='current-account', detail=False)
+    def get_current_account(self, request):
+        user = request.user
+        return Response(serializers.AccountSerializer(user).data)
 
 
 class ApprovalViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -403,14 +542,14 @@ class ApprovalViewSet(viewsets.ViewSet, generics.ListAPIView):
 class CommentViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateAPIView):
     queryset = Comment.objects.all()
     serializer_class = serializers.CommentSerializer
-    permission_classes = [IsAuthenticated, perms.IsOwnerOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(student=self.request.user.student)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.student.user != request.user.get_student_profile():
+        if instance.student != request.user.get_student_profile():
             return Response({"error": "You do not have permission to delete this comment."},
                             status=status.HTTP_403_FORBIDDEN)
         self.perform_destroy(instance)
@@ -418,12 +557,36 @@ class CommentViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateA
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.student.user != request.user.get_student_profile():
+        if instance.student != request.user.get_student_profile():
             return Response({"error": "You do not have permission to edit this comment."},
                             status=status.HTTP_403_FORBIDDEN)
+            # return Response(, status=status.HTTP_403_FORBIDDEN)
 
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
             self.perform_update(serializer)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RemoveEvaluationFromOutlineView(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def destroy(self, request, outline_pk=None, evaluation_pk=None):
+        try:
+            outline = Outline.objects.get(id=outline_pk)
+            evaluation = Evaluation.objects.get(id=evaluation_pk)
+
+            if outline.lecturer != request.user.get_lecturer_profile():
+                return Response({"error": "You can only delete evaluation to outlines you have created."},
+                                status=status.HTTP_403_FORBIDDEN)
+
+            if evaluation in outline.evaluation.all():
+                outline.evaluation.remove(evaluation)
+                return Response({"detail": "Evaluation removed from Outline."}, status=status.HTTP_204_NO_CONTENT)
+            else:
+                return Response({"detail": "Evaluation not found in Outline."}, status=status.HTTP_404_NOT_FOUND)
+        except Outline.DoesNotExist:
+            return Response({"detail": "Outline not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Evaluation.DoesNotExist:
+            return Response({"detail": "Evaluation not found."}, status=status.HTTP_404_NOT_FOUND)
