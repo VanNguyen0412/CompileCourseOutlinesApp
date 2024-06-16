@@ -243,6 +243,14 @@ export default StyleSheet.create({
         textAlign: 'center',
 
     },
+    headerName: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 20,
+        color: 'rgb(120, 69, 172)',
+        textAlign: 'center',
+
+    },
     fieldContainerCO: {
         marginBottom: 20,
     },
@@ -365,7 +373,19 @@ export default StyleSheet.create({
         bottom: 16,
         right: 16,
         position: "absolute",
-      },
+    },
+    inputContainerCO: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        padding: 10,
+        backgroundColor: '#fff',
+    },
+    fieldContainerCO: {
+        marginBottom: 15,
+    },
 
     
 });

@@ -47,7 +47,7 @@ const ApproveOutline = () => {
             }
             const res = await authApi(token).post(endpoints['approve-outline'](outlineId));
             if (res.status === 200) {
-                Alert.alert("Success", "Đề cương đã được xét duyệt thành công.");
+                Alert.alert("Thông báo", "Đề cương đã được xét duyệt thành công.");
                 // Optionally, refresh the list after approval
                 loadOutlineNoApprove();
             }

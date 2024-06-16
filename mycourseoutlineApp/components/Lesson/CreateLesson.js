@@ -56,12 +56,12 @@ const CreateLesson = () => {
             // Kiểm tra phản hồi từ server
             if (response.status === 201) {
                 console.info("Lesson created successfully:", response.data);
-                Alert.alert("Success", "Lesson created successfully.");
+                Alert.alert("Thông báo", "Đã tạo môn học thành công.");
                 setSubject('');
                 setCategory(null);
             } else if (response.status === 403) {
                 console.error("Error: Only lecturers can create lessons.");
-                Alert.alert("Error: Only lecturers can create lessons.");
+                Alert.alert("Error: Chỉ có giảng viên mới được tạo mới khóa học.");
             } else {
                 console.error("Error creating lesson:", response.errorData);
                 Alert.alert("Error", "Error creating lesson");

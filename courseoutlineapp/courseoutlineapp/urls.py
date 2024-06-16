@@ -20,7 +20,7 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from courseoutline.admin import admin_site
-from courseoutline.views import RemoveEvaluationFromOutlineView
+from courseoutline.views import RemoveEvaluationFromOutlineView, LecturerDetailByAccountView, StudentDetailByAccountView
 
 remove_evaluation = RemoveEvaluationFromOutlineView.as_view({
     'delete': 'destroy',
@@ -54,6 +54,9 @@ urlpatterns = [
             name='schema-redoc'),
     path('outline/<int:outline_pk>/evaluation/<int:evaluation_pk>/', remove_evaluation,
          name='remove_evaluation_from_outline'),
-
+    path('lecturer/<int:account_id>/accounts/', LecturerDetailByAccountView.as_view(),
+        name='lecturer-detail-by-account'),
+    path('student/<int:account_id>/accounts/', StudentDetailByAccountView.as_view(),
+        name='student-detail-by-account'),
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 ]

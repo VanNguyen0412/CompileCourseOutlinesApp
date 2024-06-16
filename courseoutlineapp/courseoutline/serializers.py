@@ -8,34 +8,6 @@ from courseoutline.models import *
 User = get_user_model()
 
 
-class LecturerNameSerializer(serializers.ModelSerializer):
-    full_name = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Lecturer
-        fields = ['full_name', 'account_id', 'position']
-
-    def get_full_name(self, obj):
-        return f"{obj.first_name} {obj.last_name}"
-
-
-class StudentNameSerializer(serializers.ModelSerializer):
-    full_name = serializers.SerializerMethodField()
-    avatar = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Student
-        fields = ['id', 'full_name', 'avatar','account_id' ]
-
-    def get_full_name(self, obj):
-        return f"{obj.first_name} {obj.last_name}"
-
-    def get_avatar(self, obj):
-        if obj.account:
-            return obj.account.avatar.url
-        return None
-
-
 class LessonNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
@@ -56,6 +28,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
 class AccountSerializer(serializers.ModelSerializer):
     code = serializers.IntegerField(required=True, write_only=True)
+    email = serializers.EmailField(required=True)
 
     def to_representation(self, instance):
         req = super().to_representation(instance)
@@ -66,7 +39,8 @@ class AccountSerializer(serializers.ModelSerializer):
     # email = serializers.EmailField(required=True)
     class Meta:
         model = Account
-        fields = ['id', 'email', 'username', 'password', 'avatar', 'role', 'date_joined', 'code', 'is_approved', 'is_staff']
+        fields = ['id', 'email', 'username', 'password', 'avatar', 'role', 'date_joined', 'code', 'is_approved',
+                  'is_staff']
         extra_kwargs = {
             "password": {
                 "write_only": True,
@@ -81,6 +55,37 @@ class AccountSerializer(serializers.ModelSerializer):
                 "read_only": True,
             }
         }
+
+
+class AccountSerializer1(serializers.ModelSerializer):
+    code = serializers.IntegerField(required=True, write_only=True)
+
+    def to_representation(self, instance):
+        req = super().to_representation(instance)
+        if instance.avatar:
+            req['avatar'] = instance.avatar.url
+        return req
+
+    # email = serializers.EmailField(required=True)
+    class Meta:
+        model = Account
+        fields = ['id', 'email', 'username', 'password', 'avatar', 'role', 'date_joined', 'code', 'is_approved',
+                  'is_staff']
+        extra_kwargs = {
+            "password": {
+                "write_only": True,
+            },
+            "role": {
+                "read_only": True,
+            },
+            "date_joined": {
+                "read_only": True,
+            },
+            "is_approved": {
+                "read_only": True,
+            }
+        }
+
 
 class AccountSerializer2(serializers.ModelSerializer):
     code = serializers.IntegerField(required=True, write_only=True)
@@ -88,7 +93,8 @@ class AccountSerializer2(serializers.ModelSerializer):
     # email = serializers.EmailField(required=True)
     class Meta:
         model = Account
-        fields = ['id', 'email', 'username', 'password', 'avatar', 'role', 'date_joined', 'code', 'is_approved', 'is_staff']
+        fields = ['id', 'email', 'username', 'password', 'avatar', 'role', 'date_joined', 'code', 'is_approved',
+                  'is_staff']
         extra_kwargs = {
             "password": {
                 "write_only": True,
@@ -103,6 +109,7 @@ class AccountSerializer2(serializers.ModelSerializer):
                 "read_only": True,
             }
         }
+
 
 class LecturerAccountSerializer(AccountSerializer):
     avatar = serializers.ImageField(required=True, allow_null=False, allow_empty_file=False)
@@ -124,13 +131,33 @@ class LecturerAccountSerializer(AccountSerializer):
         return account
 
 
+class StudentNameSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
+    account = AccountSerializer1()
+
+    class Meta:
+        model = Student
+        fields = ['first_name', 'last_name', 'full_name', 'account', 'age', 'gender', 'code', 'avatar']
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+
+    def get_avatar(self, obj):
+        if obj.account:
+            if obj.account.avatar:
+                return obj.account.avatar.url
+            return None
+        return None
+
+
 class EvaluationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Evaluation
         fields = ['id', 'percentage', 'method']
 
 
-class StudentAccountSerializer(AccountSerializer):
+class StudentAccountSerializer(AccountSerializer1):
     class Meta:
         model = AccountSerializer.Meta.model
         fields = AccountSerializer.Meta.fields
@@ -163,7 +190,7 @@ class StudentSerializer(UserSerializer):
 class LecturerSerializer(UserSerializer):
     class Meta:
         model = Lecturer
-        fields = UserSerializer.Meta.fields + ['position']
+        fields = UserSerializer.Meta.fields + ['position', 'account_id']
 
 
 class ApprovalSerializer(AccountSerializer2):
@@ -184,6 +211,18 @@ class ApprovalSerializer(AccountSerializer2):
         return approval
 
 
+class LecturerNameSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    account = AccountSerializer1()
+
+    class Meta:
+        model = Lecturer
+        fields = ['first_name', 'last_name', 'full_name', 'account', 'position', 'age', 'gender', 'code']
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+
+
 class OutlineSerializer(serializers.ModelSerializer):
     course = CourseSerializer(many=True)
     evaluation = EvaluationSerializer(many=True)
@@ -200,7 +239,7 @@ class OutlineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Outline
         fields = ['id', 'name', 'credit', 'overview', 'created_date', 'image', 'lecturer', 'course',
-                  'lesson', 'evaluation','is_approved']
+                  'lesson', 'evaluation', 'is_approved']
         read_only_fields = ['lecturer', 'is_approved']
 
     def create(self, validated_data):
@@ -236,6 +275,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class AddCommentSerializer(serializers.ModelSerializer):
     # student = StudentNameSerializer()
+    # account = AccountSerializer1()
     class Meta:
         model = Comment
         fields = ['id', 'content', 'outline', 'created_date', 'updated_date', 'student']
@@ -254,6 +294,7 @@ class CreateOutlineSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'credit', 'overview', 'created_date', 'updated_date', 'lecturer',
                   'lesson', 'image']
         read_only_fields = ['lecturer']
+
 
 class OutlineEvaluationSerializer(serializers.ModelSerializer):
     evaluation = EvaluationSerializer(many=True)

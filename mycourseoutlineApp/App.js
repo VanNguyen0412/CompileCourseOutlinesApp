@@ -20,6 +20,8 @@ import Account from "./components/Admin/Accounts";
 import Approval from "./components/Admin/Approval";
 import Approve from "./components/Admin/Approve";
 import UpdateInfo from "./components/user/UpdateInfo";
+import UpdateOutline from "./components/Outline/UpdateOutline";
+import UpdateAccount from "./components/user/UpdateAccount";
 
 
 const Stack = createStackNavigator();
@@ -34,6 +36,8 @@ const MyStackLesson = () => {
           <TouchableOpacity onPress={() => {
             if (!user) {
               navigation.navigate('Login'); // Chuyển đến màn hình đăng nhập nếu chưa đăng nhập
+            }else{
+              navigation.navigate('Profile');
             }
           }}>
             {user===null ? (
@@ -52,7 +56,7 @@ const MyStackLesson = () => {
               
               <Avatar.Image
                 size={35}
-                source={{ uri: user.avatar }}
+                source={{ uri: user.account.avatar }}
                 style={{ marginRight: 10 }}
               />
             )}
@@ -98,7 +102,7 @@ const MyStackOutline = () => {
               
               <Avatar.Image
                 size={35}
-                source={{ uri: user.avatar }}
+                source={{ uri: user.account.avatar }}
                 style={{ marginRight: 10 }}
               />
             )}
@@ -109,6 +113,8 @@ const MyStackOutline = () => {
       <Stack.Screen name="Outline" component={Outline} options={{ headerTitleAlign: "center", title: "Đề Cương"}}/>
       <Stack.Screen name="OutlineDetail" component={OutlineDetail} options={{title: "Chi tiết đề cương"}} /> 
       <Stack.Screen name="CreateOutline" component={CreateOutline} options={{title: "Thêm mới đề cương"}} />
+      <Stack.Screen name="UpdateOutline" component={UpdateOutline} options={{title: "Chỉnh sửa đề cương"}} />
+
     </Stack.Navigator>
   );
 }
@@ -119,7 +125,7 @@ const MyStackLogin = () => {
     <Stack.Navigator
       initialRouteName="Login">
       <Stack.Screen name="Đăng nhập" component={Login} options={{ headerTitleAlign: "center"}} />
-      <Stack.Screen name="Đăng ký" component={Register} />
+      <Stack.Screen name="Đăng ký" component={Register} options={{ headerTitleAlign: "center", title: "Đăng Ký Tài Khoản Giảng Viên"}} />
     </Stack.Navigator>
   );
 }
@@ -158,7 +164,7 @@ const MyStackLoginSV = () => {
   return (
     <Stack.Navigator
     initialRouteName="admin">
-      <Stack.Screen name="Register" component={Approve} options={{ headerTitleAlign: "center", title: "Yêu Cầu Xét Duyệt"}} /> 
+      <Stack.Screen name="Register" component={Approve} options={{ headerTitleAlign: "center", title: "Yêu Cầu Xét Duyệt TK Sinh Viên"}} /> 
     
     </Stack.Navigator>
   );
@@ -168,9 +174,20 @@ const MyStackProfile = () => {
   return (
     <Stack.Navigator
     initialRouteName="admin">
+      <Stack.Screen name="Update" component={UpdateInfo} options={{ headerTitleAlign: "center", title: "Cập Nhập TK Lần Đầu Đăng Nhập"}} /> 
       <Stack.Screen name="Profile" component={Profile} options={{ headerTitleAlign: "center", title: "Thông Tin Tài Khoản"}} /> 
-      <Stack.Screen name="Update" component={UpdateInfo} options={{ headerTitleAlign: "center", title: "Cập Nhập Tài Khoản"}} /> 
+      <Stack.Screen name="UpdateAccount" component={UpdateAccount} options={{ headerTitleAlign: "center", title: "Cập Nhập Tài Khoản User"}} /> 
 
+    </Stack.Navigator>
+  );
+}
+
+const MyStackLogout = () => {
+  return (
+    <Stack.Navigator
+    initialRouteName="admin">
+      <Stack.Screen name="Profile" component={Profile} options={{ headerTitleAlign: "center", title: "Thông Tin Tài Khoản"}} /> 
+      <Stack.Screen name="UpdateAccount" component={UpdateAccount} options={{ headerTitleAlign: "center", title: "Cập Nhập Tài Khoản User"}} /> 
     </Stack.Navigator>
   );
 }
@@ -181,16 +198,14 @@ const MyTab = () => {
   return (
     <Tab.Navigator>
 
-        
-
       {user===null ? <>
-        <Tab.Screen name="Register" component={UpdateInfo}
-          options={{title:'Yêu cầu tài khoản',
-            tabBarIcon: () => <Icon source="account-group" size={30} color="gray"/>, headerShown: false}} />
-
         <Tab.Screen name="Login" component={MyStackLogin} 
             options={{title: "Đăng nhập, Đăng ký", 
             tabBarIcon: () => <Icon source="login" size={30}  color="gray" />, headerShown: false}} />
+            
+        <Tab.Screen name="Register" component={MyStackLoginSV}
+          options={{title:'Yêu cầu tài khoản',
+            tabBarIcon: () => <Icon source="account-group" size={30} color="gray"/>, headerShown: false}} />
 
       </>: user.is_staff ? <>
 
@@ -210,6 +225,12 @@ const MyTab = () => {
           options={{title: "Đăng xuất", 
           tabBarIcon: () => <Icon source="logout" size={30} color="gray" />,headerShown: false}} />
 
+      </>: user.avatar === null ? <>
+
+        <Tab.Screen name="Update" component={MyStackProfile} 
+          options={{title: "Cập Nhập", 
+          tabBarIcon: () => <Icon source="update" size={30} color="gray" />,headerShown: false}} />
+
       </>: <>
         <Tab.Screen name="Home" component={MyStackLesson} 
           options={{title: "Danh mục môn học", 
@@ -219,7 +240,7 @@ const MyTab = () => {
           options={{title: "Danh mục đề cương", 
           tabBarIcon: () => <Icon source="book-outline" size={30} color="gray" />,  headerShown: false}} />
 
-        <Tab.Screen name="Profile" component={MyStackProfile} 
+        <Tab.Screen name="Profile" component={MyStackLogout} 
           options={{title: "Đăng xuất", 
           tabBarIcon: () => <Icon source="logout" size={30} color="gray" />,headerShown: false}} />
 

@@ -84,7 +84,7 @@ const CreateOutline = () => {
             // Kiểm tra phản hồi từ server
             if (response.status === 201) {
                 console.info("Tạo đề cương thành công:", response.data);
-                Alert.alert("Success", "Đã tạo đề cương thành công.");
+                Alert.alert("Thông báo", "Đã tạo đề cương thành công.");
                 setName('');
                 setCredit('');
                 setImage(null);

@@ -38,5 +38,6 @@ export default LessonStyle =  StyleSheet.create({
         transitionDuration: '300ms',
         transitionTimingFunction: 'ease-in-out',
         // width: "70%"
-      },
+    },
+    
 });

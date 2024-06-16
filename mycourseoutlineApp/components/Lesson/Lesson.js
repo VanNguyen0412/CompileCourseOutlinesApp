@@ -22,7 +22,7 @@ const Lesson = ({navigation, route}) => {
     const [visibleMenus, setVisibleMenus] = useState({});
     const user = useContext(MyUserContext);
     const [selectedCategoryId, setSelectedCategoryId] = useState(null);
-    const userRole = user?.role;
+    const userRole = user?.account.role;
     const [refreshing, setRefreshing] = useState(false);
 
     const openMenu = (index) => {

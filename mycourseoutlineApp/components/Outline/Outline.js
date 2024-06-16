@@ -22,7 +22,7 @@ const Outline = () => {
     const nav = useNavigation();
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState(null);
-    const userRole = user?.role;
+    const userRole = user?.account.role;
     const [refreshing, setRefreshing] = useState(false);
 
     
@@ -188,7 +188,7 @@ const Outline = () => {
               </View>
             ))}
             </ScrollView>
-            <AnimatedFAB
+            {/* <AnimatedFAB
                 icon={"plus"}
                 label={"Add complaint"}
                 // extended={isExtended}
@@ -197,7 +197,7 @@ const Outline = () => {
                 animateFrom={"right"}
                 iconMode={"static"}
                 style={[styles.fabStyle]}
-            />
+            /> */}
         </Provider>
     );
 };

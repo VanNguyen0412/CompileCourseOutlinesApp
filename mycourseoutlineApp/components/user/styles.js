@@ -39,6 +39,11 @@ export default StyleSheet.create({
       },
       button1: {
         backgroundColor: 'rgb(120, 69, 172)',
+        marginBottom: 7,
+      },
+      button2: {
+        backgroundColor: '#ba55d3',
+        marginBottom: 7,
       },
       containerLogin: {
         flex: 1,
@@ -125,5 +130,25 @@ export default StyleSheet.create({
         borderColor: '#ccc',
         borderRadius: 5,
         paddingHorizontal: 10,
-    },
+    },inputContainerCO: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: '#ccc',
+      borderRadius: 5,
+      padding: 10,
+      backgroundColor: '#fff',
+  },
+  inputCO: {
+      flex: 1,
+      fontSize: 16,
+      color: '#333',
+  },fieldContainerCO: {
+    marginBottom: 15,
+},
+labelCO: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: '#666',
+},
 });

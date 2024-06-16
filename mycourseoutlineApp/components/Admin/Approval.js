@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authApi, endpoints } from '../../configs/APIs';
 import styleAdmin from './styleAdmin';
 import { ActivityIndicator, Button } from 'react-native-paper';
 import moment from 'moment';
+import { MyDispatchContext } from "../../configs/Context";
 
 
 const Approval = () => {
     const [loading, setLoading] = useState(true);
     const [pendingApprove, setPendingApprove] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
+    const dispatch = useContext(MyDispatchContext);
 
     useEffect(() => {
         fetchPendingApprove();
@@ -53,7 +55,7 @@ const Approval = () => {
         }
     };
 
-    const handleApprove = async (id, code, last_name) => {
+    const handleApprove = async (approveId, code, last_name) => {
         try {
             const token = await AsyncStorage.getItem("token");
 
@@ -65,15 +67,17 @@ const Approval = () => {
             console.log('Payload:', {
                 username: last_name,
                 password: code,
-                id: id
+                id: approveId
             });
             const data = {
                 username: last_name,
                 password: code
             };
-            const response = await authApi(token).post(endpoints['confirm-approve'](id), data);
+            console.info(token)
+            const response = await authApi(token).post(endpoints['confirm-approve'](approveId), data);
             console.log('Approval response:', response.data);
-            Alert.alert('Success', 'Yêu cầu đã được duyệt');
+
+            Alert.alert('Thông báo', 'Yêu cầu đã được duyệt');
             fetchPendingApprove();
         } catch (error) {
             console.error('Error approving request:', error);

@@ -57,6 +57,8 @@ const Register = () => {
             let res = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
+                aspect: [4, 3],
+                quality: 1,
             });
             if (!res.canceled)
                 change(res.assets[0], 'avatar');
@@ -67,6 +69,7 @@ const Register = () => {
         if (!user.avatar) {
             Alert.alert("ĐĂNG KÝ", "Vui lòng chọn ảnh đại diện");
             return;
+
         }
 
         if(user.password !== user.confirm){
@@ -96,7 +99,7 @@ const Register = () => {
             });
             if(response.status === 201){
                 Alert.alert("ĐĂNG KÝ", "Đăng ký thành công, chờ xét duyệt");
-                nav.navigate("Login");
+                nav.navigate("Đăng nhập");
             }
         } catch (error) {
             if (error.response){
@@ -115,7 +118,7 @@ const Register = () => {
         <View style={[MyStyle.container, MyStyle.margin]}>
             <ScrollView>
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-                    <Text style={styles.header}>GIẢNG VIÊN ĐĂNG KÝ</Text>
+                    
                     {fields.map(f => <TextInput value={user[f.field]} onChangeText={t => change(t, f.field)} key={f.field} style={MyStyle.margin} label={f.label} secureTextEntry={f.secureTextEntry} right={<TextInput.Icon icon={f.icon}/>}/>)}
 
                     <TouchableRipple onPress={picker}>

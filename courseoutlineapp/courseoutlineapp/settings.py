@@ -155,3 +155,9 @@ CLIENT_ID = 'nTTIzOJqAg7ZULobL0pkQmQKrA8utLBF9Wqlhivo'
 CLIENT_SECRET = 'EPwk201nO5Al26UE8CuqyTM3yvXGfrnx5PafCwoTTG5lXFZ3uUb5NDdSsg7C0ysYIPdrr56wIcoXp9Fi0W1oaViqiVMyFQuMmq1rFjwPm7Y9Wv5TkyTySAdug43dGxZ0'
 # https://pictogrammers.com/library/mdi/
 # https://codepen.io/enxaneta/full/adLPwv/
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'yanghara2611@gmail.com'
+EMAIL_HOST_PASSWORD = 'iiyi bfps ggeq arti'

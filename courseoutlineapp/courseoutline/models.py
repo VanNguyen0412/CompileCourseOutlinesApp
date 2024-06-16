@@ -66,8 +66,8 @@ class User(BaseModel):
         abstract = True
 
     account = models.ForeignKey(Account, null=True, blank=True, on_delete=models.CASCADE, related_name='%(class)ss')
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=255, blank=True)
+    last_name = models.CharField(max_length=255, blank=True)
     age = models.CharField(max_length=2)
     gender = models.BooleanField(default=True)  # true is female, false is male
     code = models.CharField(max_length=10, null=True, blank=True, unique=True, editable=False)

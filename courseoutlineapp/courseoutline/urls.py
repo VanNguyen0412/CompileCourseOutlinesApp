@@ -10,6 +10,7 @@ r.register('courses', views.CourseViewSet, 'courses')
 r.register('outlines', views.OutlineViewSet, 'outlines')
 r.register('lessons', views.LessonViewSet, 'lessons')
 r.register('comments', views.CommentViewSet, 'comments')
+
 # r.register('evaluation', views.RemoveEvaluationFromOutlineView, 'evaluation')
 
 urlpatterns = [

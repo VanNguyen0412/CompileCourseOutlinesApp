@@ -14,6 +14,7 @@ export const endpoints = {
     'lesson-course': (lessonId) => `/lessons/${lessonId}/courses/`,
     'lesson-outline': (lessonId) => `/lessons/${lessonId}/outlines/`,
     'lesson-create': '/lessons/create/',
+    'lesson-addcourse': (lessonId) => `/lessons/${lessonId}/add_course/`,
     'login': '/o/token/',
     'current-account': '/accounts/current-account/',
     'add-comment': (outlineId) => `/outlines/${outlineId}/comments/`,
@@ -30,7 +31,12 @@ export const endpoints = {
     'pending-account': '/accounts/pending/',
     'confirm-account': (accountId) => `/accounts/${accountId}/confirm/`,
     'pending-approve': '/approve/pending/',
-    'confirm-approve': (approveId) => `/approve/${approveId}/confirm/`
+    'confirm-approve': (approveId) => `/approve/${approveId}/confirm/`,
+    'update-info': (accountId) => `/accounts/${accountId}/first_login/`,
+    'update-outline': (outlineId) => `/outlines/${outlineId}/update/`,
+    'update-account': (accountId) => `/accounts/${accountId}/update/`,
+    'lecturer': (accountId) => `/lecturer/${accountId}/accounts/`,
+    'student': (accountId) => `/student/${accountId}/accounts/`,
 };
 
 export const authApi = (token) => {

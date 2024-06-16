@@ -1,8 +1,9 @@
 import { useContext, useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, Platform, Alert, Dimensions, Linking } from "react-native";
+import { View, Text, TouchableOpacity, Platform, Alert, Dimensions, Linking, Modal,TextInput, RefreshControl } from "react-native";
 import MyStyle from "../../styles/MyStyle";
 import { ActivityIndicator, Appbar, Card, DataTable, Divider, List, Menu,
-     Paragraph, Provider, SegmentedButtons, TextInput, Title, Button } from "react-native-paper";
+     Paragraph, Provider, SegmentedButtons, Title, Button, 
+     Avatar} from "react-native-paper";
 import moment from "moment";
 import APIs, { authApi, endpoints } from "../../configs/APIs";
 import { ScrollView } from "react-native";
@@ -26,8 +27,8 @@ const OutlineDetail = ({route}) => {
     const [visibleMenus, setVisibleMenus] = useState(Array(comment.length).fill(false));
     const [loading, setLoading] = useState(false);
     const user = useContext(MyUserContext);
-    const userRole = user?.role;
-    const currentUser = user?.id;
+    const userRole = user?.account.role;
+    const currentUser = user?.account.id;
     const [content, setContent] = useState("");
     const [page, setPage] = useState(1);
     const [more, setMore] = useState(true);
@@ -39,7 +40,8 @@ const OutlineDetail = ({route}) => {
     const [evaluation, setEvaluation] = useState([]);
     const nav = useNavigation();
     const [downloading, setDownloading] = useState(false);
-
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
     const openMenu = (index) => {
         const newVisibleMenus = [...visibleMenus];
@@ -73,16 +75,16 @@ const OutlineDetail = ({route}) => {
             const token = await AsyncStorage.getItem("token");
 
             if (!token) {
-                Alert.alert("Error", "No access token found.");
+                Alert.alert("Thông báo Error", "No access token found.");
                 return;
             }
 
-            // Gửi yêu cầu POST để tạo outline mới
+            // Gửi yêu cầu POST để thêm đánh giá mới
             const response = await authApi(token).post(endpoints['add-evaluation'](outlineId), {evaluation: evaluations});
 
             if (response.status === 201) {
                 console.info("Thêm đánh giá thành công:", response.data);
-                Alert.alert("Success", "Đã thêm đánh giá thành công.");
+                Alert.alert("Thông báo", "Đã thêm đánh giá thành công.");
                 setEvaluations([{ percentage: '', method: '' }]);
                 setEditMode(false);
 
@@ -99,10 +101,6 @@ const OutlineDetail = ({route}) => {
         } catch (error) {
           Alert.alert('Error', error.response?.data?.error || 'Something went wrong');
         }
-    };
-
-    const handleAddCourse = () => {
-        setCourse([...course, { year: '' }]);
     };
 
     const handleCourseText = (index, field, value) => {
@@ -127,13 +125,13 @@ const OutlineDetail = ({route}) => {
 
             if (response.status === 201) {
                 console.info("Thêm khóa học thành công:", response.data);
-                Alert.alert("Success", "Đã thêm khóa học thành công.");
+                Alert.alert("Thông báo", "Đã thêm khóa học thành công.");
                 setCourse([{year: ' '}])
-                setEditMode(false);
+                setIsModalVisible(false);
 
             } else if (response.status === 403) {
-                console.error("Error: Chỉ có giảng viên mới được thêm khóa học cho đề cương này.");
-                Alert.alert("Error: Chỉ có giảng viên mới được thêm khóa học cho đề cương này.");
+                console.error("Thông báo Error: Chỉ có giảng viên mới được thêm khóa học cho đề cương này.");
+                Alert.alert("Thông báo Error: Chỉ có giảng viên mới được thêm khóa học cho đề cương này.");
                 setCourse([{year: ' '}])
 
             } else if (response.status === 400) {
@@ -141,7 +139,7 @@ const OutlineDetail = ({route}) => {
                 Alert.alert("Error: Một đề cương chỉ tối đa hai khóa học.");
                 setCourse([{year: ' '}])
                 setEditMode(false);
-                nav.navigate('Đề cương');
+                nav.navigate('Outline');
             } else {
                 console.error("Error creating lesson:", response.errorData);
                 Alert.alert("Error", "Bị lỗi khi thêm đánh giá!!!");
@@ -155,11 +153,22 @@ const OutlineDetail = ({route}) => {
         try {
             let res = await APIs.get(endpoints['outline-details'](outlineId));
             setOutlineDetails(res.data);
-            // console.info(res.data)
+            console.info(res.data)
         } catch (err) {
             console.error(err);
         }
     }
+    const onRefresh = async () => {
+        setRefreshing(true);
+        try {
+            let res = await APIs.get(endpoints['outline-details'](outlineId));
+            setOutlineDetails(res.data);
+        } catch (ex) {
+            console.error(ex);
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
     const getEvaluationType = (method) => {
         switch (method) {
@@ -208,19 +217,18 @@ const OutlineDetail = ({route}) => {
             }
             const commentData = {
                 content: content,
-                student: user.id
+                // student: currentUser
             };
-            
-        
             // Gửi yêu cầu POST để tạo comment mới
             const response = await authApi(token).post(endpoints['add-comment'](outlineId), commentData);
 
             // Kiểm tra phản hồi từ server
             if (response.status === 201) {
                 console.info("Done:", response.data);
-                Alert.alert("Success", "Đã thêm bình luận mới.");
+                Alert.alert("Thông báo", "Đã thêm bình luận mới.");
                 setComment([...comment, response.data]);
                 setContent('');
+                nav.navigate("Outline")
             } else {
                 console.error("Error creating comment:", response.errorData);
                 Alert.alert("Error", "Thêm bình luận bị lỗi!!!");
@@ -228,7 +236,6 @@ const OutlineDetail = ({route}) => {
         }catch(ex){
             Alert.alert("Error", "Network request failed. Please check your connection.");
             console.error(ex);
-            nav.navigate("Lesson");
         }finally{
             setLoading(false);
         }
@@ -252,7 +259,7 @@ const OutlineDetail = ({route}) => {
             // Kiểm tra phản hồi từ server
             if (response.status === 200) {
                 console.info("Done:", response.data);
-                Alert.alert("Success", "Đã sửa bình luận mới.");
+                Alert.alert("Thông báo", "Đã sửa bình luận mới.");
                 setComment(comment.map(c => c.id === commentId ? response.data : c));
                 setEditingCommentId(null);
                 setEditContent('');
@@ -279,12 +286,12 @@ const OutlineDetail = ({route}) => {
                 return;
             }
             
-            // Gửi yêu cầu POST để tạo comment mới
+            // Gửi yêu cầu POST để xóa comment
             const response = await authApi(token).delete(`${endpoints['delete-comment'](commentId)}`);
 
             // Kiểm tra phản hồi từ server
             if (response.status === 204) {
-                Alert.alert("Success", "Đã xóa bình luận thành công.");
+                Alert.alert("Thông báo", "Đã xóa bình luận thành công.");
                 setComment(comment.filter(c => c.id !== commentId));
                  
             } else {
@@ -310,14 +317,14 @@ const OutlineDetail = ({route}) => {
                 return;
             }
             
-            // Gửi yêu cầu POST để tạo comment mới
+            // Gửi yêu cầu POST để tạo xóa đánh giá
             const response = await authApi(token).delete(`${endpoints['delete-evaluation'](outlineId, evaluationId)}`);
 
             // Kiểm tra phản hồi từ server
             if (response.status === 204) {
-                Alert.alert("Success", "Đã xóa đánh giá thành công.");
+                Alert.alert("Thông báo", "Đã xóa đánh giá thành công.");
                 setEvaluation(evaluation.filter(c => c.id !== evaluationId));
-                 nav.navigate('Đề cương');
+                nav.navigate('Outline');
             } else {
                 console.error("Error creating comment:", response.data);
                 Alert.alert("Error", "Xóa đánh giá bị lỗi!!!");
@@ -325,7 +332,7 @@ const OutlineDetail = ({route}) => {
         }catch(ex){
             Alert.alert("Error", "Network request failed. Please check your connection.");
             console.error(ex);
-            nav.navigate("Đề cương");
+            nav.navigate("Outline");
         }finally{
             setLoading(false);
         }
@@ -333,7 +340,7 @@ const OutlineDetail = ({route}) => {
 
     const handleDeleteComPress = (commentId, commentUserId) => {
         if (currentUser !== commentUserId) {
-            Alert.alert("Error", "Bạn không được phép xóa bình luận này.");
+            Alert.alert("Thông báo", "Bạn không được phép xóa bình luận này.");
             return;
         }
         Alert.alert(
@@ -348,7 +355,7 @@ const OutlineDetail = ({route}) => {
 
     const handleDeleteEvaPress = (evaluationId, UserId, outlineId) => {
         if (currentUser !== UserId) {
-            Alert.alert("Error", "Bạn không được phép xóa đánh giá này.");
+            Alert.alert("Thông báo", "Bạn không được phép xóa đánh giá này.");
             return;
         }
         Alert.alert(
@@ -363,7 +370,7 @@ const OutlineDetail = ({route}) => {
 
     const handleEditPress = (commentId, commentContent, commentUserId) => {
         if (currentUser !== commentUserId) {
-            Alert.alert("Error", "Bạn không được phép chỉnh sửa bình luận này.");
+            Alert.alert("Thông báo", "Bạn không được phép chỉnh sửa bình luận này.");
             return;
         }
         setEditingCommentId(commentId);
@@ -371,12 +378,38 @@ const OutlineDetail = ({route}) => {
     }
 
     
-    const handleEditAdd = () => {
-        if (currentUser !== details?.lecturer.account_id) {
-          Alert.alert("Error", "Bạn không được phép chỉnh sửa đề cương này.");
+    const handleEditEvaluation = () => {
+        const totalPercentage = details.evaluation.reduce((sum, evalItem) => sum + evalItem.percentage, 0);
+
+        if (currentUser !== details?.lecturer.account.id) {
+          Alert.alert("Thông báo", "Bạn không được phép chỉnh sửa đánh giá của đề cương này.");
           return;
         }
-        setEditMode(!editMode);
+        if (totalPercentage === 100) {
+            Alert.alert("Thông báo", "Tổng phần trăm đánh giá đã là 100%, không thể chỉnh sửa thêm.");
+            return;
+        }else{
+            setIsModalVisible(true);
+        }
+    };
+
+    const handleEditCourse = () => {
+        if (currentUser !== details?.lecturer.account.id) {
+          Alert.alert("Thông báo", "Bạn không được phép chỉnh sửa khóa học của đề cương này.");
+          return;
+        }else if (details?.course.length >= 2) {
+            Alert.alert("Thông báo", "Không thể thêm nhiều hơn 2 khóa học.");
+        }else{
+            setIsModalVisible(true);
+        }
+    };
+
+    const handleEditOutline = (id) => {
+        if (currentUser !== details?.lecturer.account.id) {
+          Alert.alert("Thông báo", "Bạn không được phép chỉnh sửa đề cương này.");
+          return;
+        }
+        nav.navigate("UpdateOutline", {'outlineId': id})
     };
 
     const handleDownload = async () => {
@@ -395,8 +428,6 @@ const OutlineDetail = ({route}) => {
                     text2: 'Failed to load PDF',
                 });
             }
-        
-            
         } catch (error) {
             Toast.show({
                 type: 'error',
@@ -424,17 +455,24 @@ const OutlineDetail = ({route}) => {
     const moreComment = () =>{
         setPage(page+1);
     }
-
     return (
         <Provider>
         <View style={MyStyle.container}>
             {details===null?<ActivityIndicator />:<>
-                <ScrollView style={styles.container} key={details.id}>
+                <ScrollView style={styles.container} key={details.id} refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}  >
                     <Card style={MyStyle.card}>
                         <Card.Cover style={[styles.cover]}
                                 source={{ uri: details.image }}/>
                         <Card.Content>
+                        <View style={{flexDirection:"row"}}>
                         <Title style={MyStyle.title}>{details.name}</Title>
+
+                        <TouchableOpacity style={{margin: 7}} onPress={() => handleEditOutline(details.id)}>
+                                <FontAwesome name="edit" size={24} color="black" />
+                        </TouchableOpacity>
+
+                        </View>
                         <Paragraph style={MyStyle.paragraph}>Giảng viên: Ths {details.lecturer.full_name}</Paragraph>
                         <Paragraph style={MyStyle.paragraph}>Chức vụ: {details.lecturer.position}</Paragraph>
                         <Paragraph style={MyStyle.paragraph}>
@@ -448,11 +486,11 @@ const OutlineDetail = ({route}) => {
                         </Card.Content>
                         
                         <Button
-                        onPress={handleDownload}
-                        disabled={downloading}
-                        icon="cloud-download-outline" 
-                        style={MyStyle.button}>{downloading ? 'Downloading...' : 'Download Outline'}</Button>
-                        <Toast ref={(ref) => Toast.setRef(ref)} />
+                            onPress={handleDownload}
+                            disabled={downloading}
+                            icon="cloud-download-outline" 
+                            style={MyStyle.button}>{downloading ? 'Đang Tải...' : 'Tải Đề Cương'}</Button>
+                            <Toast ref={(ref) => Toast.setRef(ref)} />
 
                     </Card>
                     <SegmentedButtons style={MyStyle.margin}
@@ -478,7 +516,7 @@ const OutlineDetail = ({route}) => {
                             <View style={styles.header}>
                             <Text style={[styles.text]}>1. Đánh giá môn học/ Student assessment</Text>
                             {userRole === 'lecturer' && (
-                                <TouchableOpacity onPress={handleEditAdd}>
+                                <TouchableOpacity onPress={handleEditEvaluation}>
                                 <FontAwesome name="edit" size={24} color="black" />
                                 </TouchableOpacity>
                             )}
@@ -498,39 +536,55 @@ const OutlineDetail = ({route}) => {
                                             {evalItem.method === "FinalExam" ? 'Kết thúc môn học' : 'Quá trình học'}
                                         </DataTable.Cell>
                                         <DataTable.Cell style={styles.tableCell3}>{evalItem.percentage}%</DataTable.Cell>
+                                        {/* <DataTable.Cell style={styles.tableCell3}>{details.evaluation.reduce((sum, evalItem) => sum + evalItem.percentage, 0)}%</DataTable.Cell> */}
                                         <DataTable.Cell style={styles.tableCell3}>
                                         <Appbar.Action 
                                                         icon='playlist-remove'
-                                                        onPress={() => handleDeleteEvaPress(evalItem.id,details.lecturer.account_id, outlineId)}/>
+                                                        onPress={() => handleDeleteEvaPress(evalItem.id,details.lecturer.account.id, outlineId)}/>
                                             </DataTable.Cell>
                                     </DataTable.Row>
+                                    
                                     ))}
                             </DataTable>
-                            
-
-                            {editMode && (
-                            <>
                             {evaluations.map((evaluation, index) => (
-                                <View key={index} style={styles.evaluationContainer}>
-                                    <Text style={[styles.text, styles.margin]}>1.1. Thêm đánh giá {index + 1}</Text>
-                                    <TextInput
-                                        style={styles.inputOD}
-                                        placeholder="Percentage"
-                                        keyboardType="numeric"
-                                        value={evaluation.percentage}
-                                        onChangeText={(text) => handleChangeText(index, 'percentage', text)}
-                                    />
-                                    <TextInput
-                                        style={styles.inputOD}
-                                        placeholder="Method"
-                                        value={evaluation.method}
-                                        onChangeText={(text) => handleChangeText(index, 'method', text)}
-                                    />
+                            <Modal
+                                animationType="slide"
+                                transparent={true}
+                                visible={isModalVisible}
+                                onRequestClose={() => {
+                                    setIsModalVisible(!isModalVisible);
+                                }}
+                            >
+                                <View style={MyStyle.modalContainer}>
+                                    <View style={MyStyle.modalView}>
+                                        <Text style={MyStyle.modalText}>Thêm đánh giá {index+1}</Text>
+                                        <TextInput
+                                            style={MyStyle.inputAC}
+                                            placeholder="Nhập phần trăm"
+                                            value={evaluation.percentage}
+                                            onChangeText={(text) => handleChangeText(index, 'percentage', text)}
+                                            keyboardType="numeric"
+                                        />
+                                        <TextInput
+                                            style={MyStyle.inputAC}
+                                            placeholder="Nhập phương thức"
+                                            value={evaluation.method}
+                                            onChangeText={(text) => handleChangeText(index, 'method', text)}
+                                        />
+                                        {loading ? (
+                                            <ActivityIndicator />
+                                        ) : (
+                                            <>
+                                                <Button mode="contained" onPress={handleSubmit} style={MyStyle.button}>Lưu</Button>
+                                                <Button mode="contained" onPress={handleAddEvaluation} style={MyStyle.button}>Thêm Đánh Giá</Button>
+                                                <Button mode="outlined" onPress={() => setIsModalVisible(false)} style={MyStyle.button}>Hủy</Button>
+                                                
+                                            </>
+                                        )}
+                                    </View>
                                 </View>
+                            </Modal>
                             ))}
-                            <Button  onPress={handleAddEvaluation}>Thêm Đánh Giá</Button>
-                            <Button onPress={handleSubmit}>Lưu</Button>
-                            </>)}
                         </View>
                     )}
                     {value === 'course' && (
@@ -538,7 +592,7 @@ const OutlineDetail = ({route}) => {
                             <View style={styles.header}>
                             <Text style={[styles.text]}>2. Danh sách khóa học</Text>
                             { userRole === 'lecturer' && (
-                                <TouchableOpacity onPress={handleEditAdd}>
+                                <TouchableOpacity onPress={handleEditCourse}>
                                 <FontAwesome name="edit" size={24} color="black" />
                                 </TouchableOpacity>
                             )}
@@ -557,24 +611,41 @@ const OutlineDetail = ({route}) => {
                                     </DataTable.Row>
                                  ))}
                             </DataTable>
-                            {editMode && (
-                            <>
                             {course.map((c, index) => (
-                                <View key={index} style={styles.evaluationContainer}>
-                                    <Text style={[styles.text, styles.margin]}>1.{index + 1}. Thêm khóa học {index + 1}</Text>
-                                    <TextInput
-                                        style={styles.inputOD}
-                                        placeholder="Năm"
-                                        keyboardType="numeric"
-                                        value={c.year}
-                                        onChangeText={(text) => handleCourseText(index, 'year', text)}
-                                    />
-                                   
+                            <Modal
+                                animationType="slide"
+                                transparent={true}
+                                visible={isModalVisible}
+                                onRequestClose={() => {
+                                    setIsModalVisible(!isModalVisible);
+                                }}
+                            >
+                                <View style={MyStyle.modalContainer}>
+                                    <View style={MyStyle.modalView}>
+                                        <Text style={MyStyle.modalText}>Thêm khóa học</Text>
+                                        <TextInput
+                                            style={MyStyle.inputAC}
+                                            placeholder="Nhập năm khóa học"
+                                            value={c.year}
+                                            onChangeText={(text) => handleCourseText(index, 'year', text)}
+                                            keyboardType="numeric"
+                                        />
+                                        {loading ? (
+                                            <ActivityIndicator />
+                                        ) : (
+                                            <>
+                                                <Button mode="contained" onPress={addCourse} style={MyStyle.button}>
+                                                    Lưu
+                                                </Button>
+                                                <Button mode="outlined" onPress={() => setIsModalVisible(false)} style={MyStyle.button}>
+                                                    Hủy
+                                                </Button>
+                                            </>
+                                        )}
+                                    </View>
                                 </View>
+                            </Modal>
                             ))}
-                            <Button  onPress={handleAddCourse}>Thêm Khóa Học</Button>
-                            <Button onPress={addCourse}>Lưu</Button>
-                            </>)}
                         </View>
                     )}
                     {value === 'comment' && (
@@ -602,9 +673,16 @@ const OutlineDetail = ({route}) => {
                                 {comment.length > 0 ? (
                                     comment.map((c, index) => 
                                         <View style={styles.commentContainer}>
+                                            {c.student.avatar === null ? <>
+                                            <View style={styles.avatarContainer}>
+                                                <Avatar.Icon size={24} icon='account' style={styles.avatar} />
+                                            </View>
+                                            </>: <>
                                             <View style={styles.avatarContainer}>
                                                 <Image source={{ uri: c.student.avatar }} style={styles.avatar} />
                                             </View>
+                                            </>}
+                                            
                                             <View style={styles.commentContent}>
                                                 {editingCommentId === c.id ? (
                                                             <>
@@ -649,9 +727,9 @@ const OutlineDetail = ({route}) => {
                                                     {userRole === 'student' && (
                                                         <>
                                                             <Menu.Item 
-                                                                onPress={() => handleEditPress(c.id, c.content, c.student.account_id)} 
+                                                                onPress={() => handleEditPress(c.id, c.content, c.student.account.id)} 
                                                                 title="Chỉnh sửa" titleStyle={styles.menuItem} />
-                                                            <Menu.Item onPress={() => { handleDeleteComPress(c.id, c.student.account_id )}} title="Xóa" titleStyle={styles.menuItem} />
+                                                            <Menu.Item onPress={() => { handleDeleteComPress(c.id, c.student.account.id )}} title="Xóa" titleStyle={styles.menuItem} />
                                                             
                                                         </>
                                                     )}

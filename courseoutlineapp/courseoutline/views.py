@@ -14,6 +14,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Image, Table, TableStyle, Spacer
 from io import BytesIO
 from django.http import HttpResponse
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -44,7 +46,7 @@ class LessonViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPI
         return queryset
 
     def get_permissions(self):
-        if self.action in ['create_lesson']:
+        if self.action in ['create_lesson', 'add_course']:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
@@ -85,6 +87,36 @@ class LessonViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPI
         except Lesson.DoesNotExist:
             return Response({'error': 'Lesson not found'}, status=404)
 
+    @action(methods=['post'], url_path='add_course', detail=True)
+    def add_course(self, request, pk):
+        lesson = self.get_object()
+        year = request.data.get('year')
+
+        # Kiểm tra xem người dùng là giảng viên hay không
+        if not request.user.is_lecturer():
+            return Response({"error": "Only lecturers can add course."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        # Lấy thông tin giảng viên hiện đang đăng nhập
+        lecturer = request.user.get_lecturer_profile()
+
+        if lesson.lecturer != request.user.get_lecturer_profile():
+            return Response({"error": "You can only add course to lessons you have created."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+            # Get or create the course
+        course, created = Course.objects.get_or_create(year=year)
+
+        # Add the lesson to the course if not already added
+        if lesson not in course.lessons.all():
+            course.lessons.add(lesson)
+            course.save()
+
+        # Serialize the course data
+        serializer = serializers.CourseSerializer(course)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Outline.objects.filter(active=True)
@@ -92,7 +124,7 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
     pagination_class = paginators.OutlinePaginator
 
     def get_permissions(self):
-        if self.action in ['add_comment', 'add_evaluation', 'create_outline', 'add_course']:
+        if self.action in ['add_comment', 'add_evaluation', 'create_outline', 'add_course', 'update_outline']:
             return [IsAuthenticated()]
         elif self.action in ['update', 'partial_update']:
             return [IsAuthenticated(), perms.IsLecturerAndOwner()]
@@ -135,6 +167,28 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
             if course:
                 queryset = queryset.filter(course__year__icontains=course)
         return queryset
+
+    @action(detail=True, methods=['patch'], url_path='update')
+    def update_outline(self, request, pk=None):
+        try:
+            outline = self.get_object()
+            if not request.user.is_lecturer():
+                return Response({"error": "Chỉ có giảng viên mới được sửa đề cương."},
+                                status=status.HTTP_403_FORBIDDEN)
+
+            # Lấy thông tin giảng viên hiện đang đăng nhập
+
+            if outline.lecturer != request.user.get_lecturer_profile():
+                return Response({"error": "You can only update to outlines you have created."},
+                                status=status.HTTP_403_FORBIDDEN)
+
+            serializer = self.serializer_class(outline, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Outline.DoesNotExist:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     @action(methods=['get'], url_path='comment', detail=True)
     def get_comment(self, request, pk):
@@ -334,7 +388,7 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
         elements.append(Paragraph("TRUONG DAI HOC MO THANH PHO HO CHI MINH", styles['Title']))
         elements.append(Paragraph("HO CHI MINH OPEN UNIVERSITY", styles['Title']))
 
-        elements.append(Spacer(1,12))
+        elements.append(Spacer(1, 12))
         elements.append(Paragraph("DE CUONG MON HOC COURSE OUTLINE", styles['Title']))
 
         elements.append(Spacer(1, 10))
@@ -461,13 +515,83 @@ class AccountViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
         account = self.get_object()
         account.is_approved = True
         account.save()
-        return Response(data={'message': f'Tài khoản của {account.username} đã được xét duyệt thành công.'},
+        lecturer = Lecturer.objects.get(account=account)
+        # Gửi mail
+        missing_info = []
+        if not lecturer.last_name:
+            missing_info.append("tên")
+        if not lecturer.first_name:
+            missing_info.append("họ")
+        if missing_info:
+            self.send_missing_info_email(account.email, account.username, missing_info)
+        else:
+            self.send_approval_email(account.email, account.username)
+
+        return Response(data={'messagsse': f'Tài khoản của {account.username} đã được xét duyệt thành công.'},
                         status=status.HTTP_200_OK)
 
-    @action(methods=['get', 'patch'], url_path='current-account', detail=False)
+    def send_missing_info_email(self, to_email, username, missing_info):
+        subject = 'Thông tin tài khoản không đầy đủ'
+        if len(missing_info) == 1:
+            message = f'Tài khoản của bạn ({username}) đã được xét duyệt, nhưng còn thiếu thông tin {missing_info[0]}. Vui lòng cập nhật thông tin để sử dụng dịch vụ.'
+        else:
+            missing_str = ", ".join(missing_info[:-1]) + f" và {missing_info[-1]}"
+            message = f'Tài khoản của bạn ({username}) đã được phê duyệt, nhưng thiếu thông tin về {missing_str}. Vui lòng cập nhật thông tin để sử dụng dịch vụ.'
+
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [to_email]
+        send_mail(subject, message, email_from, recipient_list)
+
+    def send_approval_email(self, to_email, username):
+        subject = 'Xét duyệt tài khoản thành công'
+        message = f'Tài khoản của bạn ({username}) đã được xét duyệt thành công. Bạn có thể đăng nhập và sử dụng các dịch vụ.'
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [to_email]
+        send_mail(subject, message, email_from, recipient_list)
+
+    @action(methods=['get'], url_path='current-account', detail=False)
     def get_current_account(self, request):
         user = request.user
         return Response(serializers.AccountSerializer(user).data)
+
+    @action(methods=['patch'], url_path='update', detail=True)
+    def update_account(self, request, pk):
+        try:
+            account = self.get_object()
+            serializer = self.serializer_class(account, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Account.DoesNotExist:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(methods=['patch'], detail=True, url_path='first_login')
+    def update_student_account(self, request, pk=None):  # Sinh viên
+        approve = self.get_object()
+
+        # Kiểm tra xem yêu cầu đã được phê duyệt chưa
+        if not approve.is_approved:
+            return Response({'error': 'Yêu cầu chưa được phê duyệt. Vui lòng chờ quản trị viên xác nhận.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Đảm bảo rằng mật khẩu và avatar được cung cấp trong request
+        password = request.data.get('password')
+        avatar = request.data.get('avatar')
+
+        if not password:
+            return Response({'error': 'Vui lòng cung cấp mật khẩu mới.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not avatar:
+            return Response({'error': 'Vui lòng cung cấp avatar mới.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Cập nhật mật khẩu và avatar
+        approve.set_password(password)
+        approve.avatar = avatar
+        approve.save()
+
+        # Trả về thông báo thành công
+        return Response(data={"message": "Cập nhật mật khẩu và avatar thành công."}, status=status.HTTP_200_OK)
 
 
 class ApprovalViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -507,36 +631,6 @@ class ApprovalViewSet(viewsets.ViewSet, generics.ListAPIView):
         approve.is_approved = True
         approve.save()
         return Response(data={"message": "Xet duyet thanh cong", "account": serializer.data})
-
-    @action(methods=['patch'], detail=True, url_path='update')
-    def update_student_account(self, request, pk=None):  # Sinh viên
-        approve = self.get_object()
-
-        # Kiểm tra xem yêu cầu đã được phê duyệt chưa
-        if not approve.is_approved:
-            return Response({'error': 'Yêu cầu chưa được phê duyệt. Vui lòng chờ quản trị viên xác nhận.'},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        # Lấy thông tin sinh viên từ Approval
-        student = approve.student
-
-        # Đảm bảo rằng mật khẩu và avatar được cung cấp trong request
-        password = request.data.get('password')
-        avatar = request.data.get('avatar')
-
-        if not password:
-            return Response({'error': 'Vui lòng cung cấp mật khẩu mới.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not avatar:
-            return Response({'error': 'Vui lòng cung cấp avatar mới.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Cập nhật mật khẩu và avatar
-        student.account.set_password(password)
-        student.account.avatar = avatar
-        student.account.save()
-
-        # Trả về thông báo thành công
-        return Response(data={"message": "Cập nhật mật khẩu và avatar thành công."}, status=status.HTTP_200_OK)
 
 
 class CommentViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateAPIView):
@@ -590,3 +684,65 @@ class RemoveEvaluationFromOutlineView(viewsets.ViewSet):
             return Response({"detail": "Outline not found."}, status=status.HTTP_404_NOT_FOUND)
         except Evaluation.DoesNotExist:
             return Response({"detail": "Evaluation not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class LecturerDetailByAccountView(generics.GenericAPIView):
+    serializer_class = serializers.LecturerNameSerializer
+
+    def get(self, request, account_id):
+        try:
+            account = Account.objects.get(id=account_id)
+            lecturer = Lecturer.objects.get(account=account)
+            serializer = self.get_serializer(lecturer)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Account.DoesNotExist:
+            return Response({"detail": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Lecturer.DoesNotExist:
+            return Response({"detail": "Lecturer not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, account_id):
+        try:
+            account = Account.objects.get(id=account_id)
+            lecturer = Lecturer.objects.get(account=account)
+
+            # Update lecturer information
+            serializer = self.get_serializer(lecturer, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Account.DoesNotExist:
+            return Response({"detail": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Lecturer.DoesNotExist:
+            return Response({"detail": "Lecturer not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class StudentDetailByAccountView(generics.GenericAPIView):
+    serializer_class = serializers.StudentNameSerializer
+
+    def get(self, request, account_id):
+        try:
+            account = Account.objects.get(id=account_id)
+            student = Student.objects.get(account=account)
+            serializer = self.get_serializer(student)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Account.DoesNotExist:
+            return Response({"detail": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Student.DoesNotExist:
+            return Response({"detail": "Student not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, account_id):
+        try:
+            account = Account.objects.get(id=account_id)
+            student = Student.objects.get(account=account)
+
+            # Update lecturer information
+            serializer = self.get_serializer(student, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Account.DoesNotExist:
+            return Response({"detail": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Student.DoesNotExist:
+            return Response({"detail": "Student not found."}, status=status.HTTP_404_NOT_FOUND)

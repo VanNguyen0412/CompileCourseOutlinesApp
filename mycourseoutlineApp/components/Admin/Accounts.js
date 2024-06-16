@@ -55,7 +55,7 @@ const Account = () => {
             return;
         }
         await authApi(token).post(endpoints['confirm-account'](id));
-        Alert.alert("Success", "Account approved successfully");
+        Alert.alert("Thông báo", "Tài khoản đã được xét duyệt thành công");
         fetchPendingAccounts();
        } catch (error){
             console.error("Error approving account:", error);
