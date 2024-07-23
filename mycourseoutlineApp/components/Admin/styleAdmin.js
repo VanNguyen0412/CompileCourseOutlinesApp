@@ -25,8 +25,8 @@ export default StyleSheet.create({
         marginRight: 10,
     },
     avatar: {
-        width: 50,
-        height: 50,
+        width: 53,
+        height: 53,
         borderRadius: 25,
     },
     fullName: {
@@ -47,7 +47,8 @@ export default StyleSheet.create({
     button: {
         borderRadius: 5,
         alignSelf:"center",
-        paddingVertical: 2,
+        // paddingVertical: 2,
+        backgroundColor: '#79c7d9'
     }, 
     containerLogin: {
         flex: 1,
@@ -99,13 +100,12 @@ export default StyleSheet.create({
         color: '#666',
     },
     input: {
-        width: '94%',
+        width: '100%',
         alignSelf: "center",
         padding: 10,
         borderWidth: 1,
         borderColor: '#ccc',
         borderRadius: 5,
-        marginBottom: 10,
     },
     inputLogin: {
         flex: 1,
@@ -136,5 +136,115 @@ export default StyleSheet.create({
         borderRadius: 5,
         paddingHorizontal: 10,
     },
+    text: {
+        fontSize: 17,
+        color: '#808080',
+        fontWeight: "500"
+    },
+    emptyContainer: {
+        padding: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#e9ecef',
+        borderRadius: 10,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: '#6c757d',
+    },
+    horizontalLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#343a40',
+    },
+    logo: {
+        width: 120,
+        height: 120,
+        borderRadius: 15,
+        marginBottom: 16,
+    },
+    inputContainer123: {
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        // padding: 10,
+        backgroundColor: '#fff',
+        marginLeft: 5,
+        marginRight:5,
+        margin: 10,
+
+    },
+    fieldContainerCO: {
+        marginBottom: 15,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalView: {
+        width: 300,
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderRadius: 20,
+        padding: 20,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    modalText: {
+        marginBottom: 15,
+        textAlign: 'center',
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 3,
+        right: 7,
+        padding: 10,
+    },
+    modalText: {
+        marginBottom: 15,
+        textAlign: 'center',
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        // marginVertical: 8,
+        color: '#5f9ea0',
+        textAlign:"center"
+    },
+    paragraph: {
+        fontSize: 16,
+        marginVertical: 8,
+        color: '#555',
+        textAlign: "center"
+    },
+    date: {
+        fontSize: 14,
+        color: '#999',
+        marginTop: 8,
+    },
+    provideButton: {
+        padding: 2, 
+        borderWidth: 0.5, 
+        marginTop: 10, 
+        borderRadius: 5, 
+        width: 200, 
+        backgroundColor: '#79c7d9' 
+    },
+
+
     
 });

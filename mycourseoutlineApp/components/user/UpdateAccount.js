@@ -8,6 +8,7 @@ import { MyDispatchContext, MyUserContext } from '../../configs/Context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScrollView } from 'react-native-gesture-handler';
 import { FastField } from 'formik';
+import MyStyle from '../../styles/MyStyle';
 
 
 const UpdateAccount = () => {
@@ -22,7 +23,54 @@ const UpdateAccount = () => {
     const info = user.account;
     const dispatch = useContext(MyDispatchContext);
 
-    const handleUpdate = async (userId) => {
+    const pickImage = async () => {
+        let { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted')
+            Alert.alert("Outline Course App", "Permissions Denied!");
+        else {
+            let res = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 1,
+            });
+            if (!res.canceled) {
+                setAvatar(res.assets[0]);
+            }
+        }
+    };
+
+    const handleUpdateUsername = async (userId, username, email, avatar) => {
+        const token = await AsyncStorage.getItem("token");
+
+            if (!token) {
+                Alert.alert("Error", "No access token found.");
+                return;
+            }
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('email', email);
+        formData.append('avatar', {
+            uri: avatar.uri,
+            type: 'image/jpeg',
+            name: 'avatar.jpg',
+        });
+        try{
+            const res = await APIs.patch(endpoints['update-account'](userId), formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            })
+            if(res.status===200){
+                Alert.alert("Thông báo",'Cập nhập thành công')
+            }
+        }catch(er){
+            console.error(er)
+            Alert.alert('Error', 'Cập nhập avatar username email thành công');
+        }
+        
+    }
+    const handleUpdate = async (userId, username, email, avatar) => {
         const token = await AsyncStorage.getItem("token");
 
             if (!token) {
@@ -65,7 +113,7 @@ const UpdateAccount = () => {
                 }
             }
 
-            // await handleAvatarUsername(userId, username, email)
+            await handleUpdateUsername(userId, username, email, avatar)
         } catch (error) {
             console.error(error)
             Alert.alert('Error', 'Failed to update information. Please try again.');
@@ -73,9 +121,25 @@ const UpdateAccount = () => {
     };
 
     return (
-        <ScrollView style={styleUpdate.containerCO}>
+        <ScrollView >
+            <View style={[MyStyle.container, {padding:20}]}>
             <View >
                 <Text style={styleUpdate.headerCO}>CẬP NHẬP TÀI KHOẢN {info.username}</Text>
+            </View>
+            <View style={styleUpdate.fieldContainerCO}>
+                <Text style={styleUpdate.labelCO}>Username</Text>
+                <View style={styleUpdate.inputContainerCO}>
+                    <TextInput
+                        style={styleUpdate.inputCO}
+                        value={username}
+                        onChangeText={setUsername}
+                        placeholder="Nhập username mới"
+                        placeholderTextColor="#999"
+                    />
+                    <TouchableOpacity>
+                        <FontAwesome name='sliders'  size={20} color="black" />
+                    </TouchableOpacity>
+                </View>
             </View>
             <View style={styleUpdate.fieldContainerCO}>
                 <Text style={styleUpdate.labelCO}>Họ</Text>
@@ -88,7 +152,7 @@ const UpdateAccount = () => {
                         placeholderTextColor="#999"
                     />
                     <TouchableOpacity>
-                        <FontAwesome name='angle-up'  size={20} color="black" />
+                        <FontAwesome name='sliders'  size={20} color="black" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -103,23 +167,38 @@ const UpdateAccount = () => {
                         placeholderTextColor="#999"
                     />
                     <TouchableOpacity>
-                        <FontAwesome name='angle-up'  size={20} color="black" />
+                        <FontAwesome name='sliders'  size={20} color="black" />
                     </TouchableOpacity>
                 </View>
             </View>
             <View style={styleUpdate.fieldContainerCO}>
-                <Text style={styleUpdate.labelCO}>Tên</Text>
+                <Text style={styleUpdate.labelCO}>Email</Text>
+                <View style={styleUpdate.inputContainerCO}>
+                    <TextInput
+                        style={styleUpdate.inputCO}
+                        value={email}
+                        onChangeText={setEmail}
+                        placeholder="Nhập email"
+                        placeholderTextColor="#999"
+                    />
+                    <TouchableOpacity>
+                        <FontAwesome name='sliders'  size={20} color="black" />
+                    </TouchableOpacity>
+                </View>
+            </View>
+            <View style={styleUpdate.fieldContainerCO}>
+                <Text style={styleUpdate.labelCO}>Tuổi</Text>
                 <View style={styleUpdate.inputContainerCO}>
                     <TextInput
                         style={styleUpdate.inputCO}
                         value={age}
                         onChangeText={setAge}
-                        placeholder="Nhập tuổi mới"
+                        placeholder="Nhập tuổi"
                         keyboardType="numeric"
                         placeholderTextColor="#999"
                     />
                     <TouchableOpacity>
-                        <FontAwesome name='angle-up'  size={20} color="black" />
+                        <FontAwesome name='list-ol'  size={20} color="black" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -133,37 +212,41 @@ const UpdateAccount = () => {
                     thumbColor={gender ? "#5f9ea0" : "#f4f3f4"}
                 />
             </View>
-            
+            <TouchableOpacity onPress={pickImage} style={{alignSelf: "center"}}>
+                <Text style={styleUpdate.text}>{avatar===null ? "Chọn Avatar": "Chọn Lại Avatar"}</Text>
+            </TouchableOpacity>
+            {avatar && <Image source={{ uri: avatar.uri }} style={styleUpdate.avatar} />}
             <Button
                 buttonStyle={styleUpdate.button}
                 title='Cập Nhập'
-                onPress={() => handleUpdate(info.id)}
+                onPress={() => handleUpdate(info.id, username, email, avatar)}
                 />
+        </View>
         </ScrollView>
     );
 };
 
 const styleUpdate = StyleSheet.create({
     containerCO: {
-        flex: 1,
+        flexGrow: 1,
         padding: 20,
         backgroundColor: '#f5f5f5',
     },
     headerCO: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 20,
+        marginBottom: 10,
         textAlign: 'center',
-        color: '#333',
+        color: 'rgb(120, 69, 172)',
         textTransform: 'uppercase',
 
     },
     fieldContainerCO: {
-        marginBottom: 15,
+        marginBottom: 10,
     },
     labelCO: {
         fontSize: 16,
-        marginBottom: 5,
+        marginBottom: 7,
         color: '#666',
     },
     inputContainerCO: {
@@ -172,7 +255,7 @@ const styleUpdate = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#ccc',
         borderRadius: 5,
-        padding: 10,
+        padding: 7,
         backgroundColor: '#fff',
     },
     inputCO: {
@@ -185,8 +268,9 @@ const styleUpdate = StyleSheet.create({
         height: 150,
         // alignItems: "center",
         alignSelf: 'center',
-        marginTop: 20,
-        borderRadius: 100,
+        marginTop: 13,
+        marginBottom: 10,
+        borderRadius: 75,
     },
     button: {
         backgroundColor: 'rgb(120, 69, 172)',
@@ -194,7 +278,8 @@ const styleUpdate = StyleSheet.create({
         padding: 10,
         borderRadius: 5,
         textAlign: 'center',
-        marginTop: 20,
+        marginTop: 10,
+        
     },
     text: {
         color:"#800080",
@@ -203,7 +288,8 @@ const styleUpdate = StyleSheet.create({
     },
     switchCO: {
         width: "50%",
-        height: 30
+        height: 20,
+        alignSelf: 'flex-start',
     },
 });
 export default UpdateAccount;

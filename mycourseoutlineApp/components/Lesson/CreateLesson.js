@@ -8,7 +8,6 @@ import APIs, { authApi, endpoints } from "../../configs/APIs";
 import { useNavigation } from "@react-navigation/native";
 import DropDownPicker from "react-native-dropdown-picker";
 import styles from "../Outline/styles";
-import style from "./style";
 
 const CreateLesson = () => {
     const user = useContext(MyUserContext);
@@ -85,7 +84,7 @@ const CreateLesson = () => {
 
     return (
         <Provider>
-            <View style={styles.container} >
+            <View style={styles.container1} >
                 <Text style={[styles.text, MyStyle.margin]}>Thêm Môn Học Mới</Text>
                 {fields.map(f => (
                         <TextInput 

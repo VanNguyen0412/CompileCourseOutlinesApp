@@ -130,7 +130,8 @@ export default StyleSheet.create({
         borderColor: '#ccc',
         borderRadius: 5,
         paddingHorizontal: 10,
-    },inputContainerCO: {
+    },
+    inputContainerCO: {
       flexDirection: 'row',
       alignItems: 'center',
       borderWidth: 1,
@@ -138,12 +139,15 @@ export default StyleSheet.create({
       borderRadius: 5,
       padding: 10,
       backgroundColor: '#fff',
+      marginLeft: 5,
+      marginRight:5,
   },
   inputCO: {
       flex: 1,
       fontSize: 16,
       color: '#333',
-  },fieldContainerCO: {
+  },
+  fieldContainerCO: {
     marginBottom: 15,
 },
 labelCO: {

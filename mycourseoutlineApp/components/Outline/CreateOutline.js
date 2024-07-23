@@ -17,8 +17,10 @@ import styles from './styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import styleAdmin from '../Admin/styleAdmin';
+import { ActivityIndicator } from 'react-native-paper';
 
-const CreateOutline = () => {
+const CreateOutline = ({route}) => {
     const [name, setName] = useState('');
     const [credit, setCredit] = useState('');
     const [overview, setOverview] = useState('');
@@ -26,8 +28,24 @@ const CreateOutline = () => {
     const [lessons, setLesson] = useState('');
     const [imageNew, setImage] = useState(null);
     const nav = useNavigation();
+    const {lessonId} = route.params;
     const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        if(lessonId != 0){
+        const loadLessonDetails = async () => {
+            try {
+                let res = await APIs.get(endpoints['lesson-details'](lessonId));
+                setLesson(res.data.subject);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        loadLessonDetails();
+        }else{
+            setLesson('')
+        }
+    }, [lessonId])
 
     const picker = async () => {
         let { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -46,7 +64,9 @@ const CreateOutline = () => {
         }
     }
 
-    const CreateOutline = async (name, credit, overview, is_approved, lesson, imageNew) => {
+
+
+    const CreateOutline = async (name, credit, overview, is_approved, imageNew) => {
         setLoading(true);
         try {
             const token = await AsyncStorage.getItem("token");
@@ -61,7 +81,7 @@ const CreateOutline = () => {
             formData.append('credit', credit);
             formData.append('overview', overview);
             formData.append('is_approved', is_approved);
-            formData.append('lesson', lesson);
+            formData.append('lesson', lessonId);
 
             const filename = imageNew.uri.split("/").pop();
             const match = /\.(\w+)$/.exec(filename);
@@ -102,15 +122,22 @@ const CreateOutline = () => {
         }catch(ex){
             Alert.alert("Error", "Network request failed. Please check your connection.");
             console.error(ex);
-            nav.navigate("Outline");
         }finally{
             setLoading(false);
         }
     }
 
     const addOutline = () => {
-        CreateOutline(name, credit, overview, is_approved, lessons, imageNew);
+        CreateOutline(name, credit, overview, is_approved, imageNew);
     };
+
+    if (loading) {
+        return (
+            <View style={styleAdmin.loadingContainer}>
+                <ActivityIndicator />
+            </View>
+        );
+    }
 
     return (
         <ScrollView contentContainerStyle={styles.containerCO}>
@@ -154,17 +181,6 @@ const CreateOutline = () => {
             </View>
 
             <View style={styles.fieldContainerCO}>
-                <Text style={styles.labelCO}>Đã xét duyệt</Text>
-                <Switch
-                style={styles.switchCO}
-                    value={is_approved}
-                    onValueChange={setIsApproved}
-                    trackColor={{ false: "#767577", true: "#66cdaa" }}
-                    thumbColor={is_approved ? "#5f9ea0" : "#f4f3f4"}
-                />
-            </View>
-
-            <View style={styles.fieldContainerCO}>
                 <Text style={styles.labelCO}>Môn học</Text>
                 <TextInput
                     style={styles.inputCO}
@@ -172,8 +188,6 @@ const CreateOutline = () => {
                     onChangeText={setLesson}
                     placeholder="Nhập môn học"
                     placeholderTextColor="#999"
-                    keyboardType="numeric"
-
                 />
             </View>
 

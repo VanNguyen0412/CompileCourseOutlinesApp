@@ -153,7 +153,7 @@ const OutlineDetail = ({route}) => {
         try {
             let res = await APIs.get(endpoints['outline-details'](outlineId));
             setOutlineDetails(res.data);
-            console.info(res.data)
+            // console.info(res.data)
         } catch (err) {
             console.error(err);
         }
@@ -228,7 +228,7 @@ const OutlineDetail = ({route}) => {
                 Alert.alert("Thông báo", "Đã thêm bình luận mới.");
                 setComment([...comment, response.data]);
                 setContent('');
-                nav.navigate("Outline")
+                // nav.navigate("Outline")
             } else {
                 console.error("Error creating comment:", response.errorData);
                 Alert.alert("Error", "Thêm bình luận bị lỗi!!!");
@@ -652,7 +652,7 @@ const OutlineDetail = ({route}) => {
                         <View style={MyStyle.outline}>
                             <Text style={[styles.text]}>3. Bình luận</Text>
                             {userRole === 'student'?(
-                            <View style={styles.inputContainer}>
+                            <View style={styles.inputContainerNow}>
                                 <TextInput
                                     mode="outlined"
                                     label="Thêm bình luận"

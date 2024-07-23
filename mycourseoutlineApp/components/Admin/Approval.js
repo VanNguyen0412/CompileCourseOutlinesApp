@@ -70,8 +70,8 @@ const Approval = () => {
                 id: approveId
             });
             const data = {
-                username: last_name,
-                password: code
+                username: code,
+                password: approveId
             };
             console.info(token)
             const response = await authApi(token).post(endpoints['confirm-approve'](approveId), data);

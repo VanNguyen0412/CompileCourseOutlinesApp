@@ -1,7 +1,6 @@
 import { createStackNavigator } from "@react-navigation/stack";
 import Lesson from "./components/Lesson/Lesson"
 import { NavigationContainer } from "@react-navigation/native";
-import LessonDetail from "./components/Lesson/LessonDetail";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Register from "./components/user/Register";
 import Login from "./components/user/Login";
@@ -17,14 +16,63 @@ import OutlineDetail from "./components/Outline/OutlineDetail";
 import CreateOutline from "./components/Outline/CreateOutline";
 import ApproveOutline from "./components/Admin/ApproveOutline";
 import Account from "./components/Admin/Accounts";
-import Approval from "./components/Admin/Approval";
 import Approve from "./components/Admin/Approve";
 import UpdateInfo from "./components/user/UpdateInfo";
 import UpdateOutline from "./components/Outline/UpdateOutline";
 import UpdateAccount from "./components/user/UpdateAccount";
+import LessonAdmin from "./components/Admin/LessonAdmin";
+import HomeScreen from "./components/HomeScreen/HomeScreen";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import ProvideAccount from "./components/Admin/ProvideAccount";
 
 
 const Stack = createStackNavigator();
+
+const MyStackLessonAdmin = () => {
+  const user = useContext(MyUserContext);
+  return (
+    <Stack.Navigator
+      initialRouteName="Home"
+      screenOptions={({navigation}) => ({
+        headerRight: () => (
+          <TouchableOpacity onPress={() => {
+            if (!user) {
+              navigation.navigate('Login'); // Chuyển đến màn hình đăng nhập nếu chưa đăng nhập
+            }else{
+              navigation.navigate('Profile');
+            }
+          }}>
+            {user===null ? (
+              <Avatar.Icon
+              size={35}
+              icon="login" // Icon đăng nhập
+              style={{ marginRight: 10 }}
+            />
+            ) : user.is_staff ?(
+              <Avatar.Image
+                size={35}
+                source={require('./images/2.png')}
+                style={{ marginRight: 10 }}
+                />
+            ): (
+              
+              <Avatar.Image
+                size={35}
+                source={{ uri: user.account.avatar }}
+                style={{ marginRight: 10 }}
+              />
+            )}
+          </TouchableOpacity>
+        )
+    })}
+    >
+      <Stack.Screen name="Lesson" component={LessonAdmin} options={{ headerTitleAlign: "center", title: "Môn Học"}}/>
+      <Stack.Screen name="CreateLesson" component={CreateLesson} options={{title: "Thêm mới môn học"}}/>
+      <Stack.Screen name="Profile" component={Profile} options={{ headerTitleAlign: "center", title: "Thông Tin Tài Khoản"}} /> 
+      <Stack.Screen name="UpdateAccount" component={UpdateAccount} options={{ headerTitleAlign: "center", title: "Cập Nhập Tài Khoản User"}} />
+    </Stack.Navigator>
+  );
+}
 
 const MyStackLesson = () => {
   const user = useContext(MyUserContext);
@@ -65,9 +113,10 @@ const MyStackLesson = () => {
     })}
     >
       <Stack.Screen name="Lesson" component={Lesson} options={{ headerTitleAlign: "center", title: "Môn Học"}}/>
-      <Stack.Screen name="LessonDetail" component={LessonDetail} options={{title: "Chi tiết môn học"}} />
       <Stack.Screen name="CreateLesson" component={CreateLesson} options={{title: "Thêm mới môn học"}}/>
-      <Stack.Screen name="OutlineDetail" component={OutlineDetail} options={{title: "Chi tiết đề cương"}} /> 
+      <Stack.Screen name="CreateOutline" component={CreateOutline} options={{title: "Thêm mới đề cương"}} />
+      <Stack.Screen name="Profile" component={Profile} options={{ headerTitleAlign: "center", title: "Thông Tin Tài Khoản"}} /> 
+      <Stack.Screen name="UpdateAccount" component={UpdateAccount} options={{ headerTitleAlign: "center", title: "Cập Nhập Tài Khoản User"}} />
     </Stack.Navigator>
   );
 }
@@ -114,7 +163,8 @@ const MyStackOutline = () => {
       <Stack.Screen name="OutlineDetail" component={OutlineDetail} options={{title: "Chi tiết đề cương"}} /> 
       <Stack.Screen name="CreateOutline" component={CreateOutline} options={{title: "Thêm mới đề cương"}} />
       <Stack.Screen name="UpdateOutline" component={UpdateOutline} options={{title: "Chỉnh sửa đề cương"}} />
-
+      <Stack.Screen name="Profile" component={Profile} options={{ headerTitleAlign: "center", title: "Thông Tin Tài Khoản"}} /> 
+      <Stack.Screen name="UpdateAccount" component={UpdateAccount} options={{ headerTitleAlign: "center", title: "Cập Nhập Tài Khoản User"}} />
     </Stack.Navigator>
   );
 }
@@ -124,51 +174,118 @@ const MyStackLogin = () => {
   return (
     <Stack.Navigator
       initialRouteName="Login">
+      <Stack.Screen name="Trang chủ" component={HomeScreen} options={{ headerTitleAlign: "center", headerShown: false}} />
       <Stack.Screen name="Đăng nhập" component={Login} options={{ headerTitleAlign: "center"}} />
       <Stack.Screen name="Đăng ký" component={Register} options={{ headerTitleAlign: "center", title: "Đăng Ký Tài Khoản Giảng Viên"}} />
+      <Stack.Screen name="Register" component={Approve} options={{ headerTitleAlign: "center", title: "Yêu Cầu Xét Duyệt TK Sinh Viên"}} />     
     </Stack.Navigator>
   );
 }
 
 const MyStackAdminOutline = () => {
+  const user = useContext(MyUserContext);
   return (
     <Stack.Navigator
-    initialRouteName="admin">
-      <Stack.Screen name="OutlineApprove" component={ApproveOutline} options={{ headerTitleAlign: "center", title: "Danh Sách Đề Cương Cần Xét Duyệt"}} />
-    
+    initialRouteName="admin"
+    screenOptions={({navigation}) => ({
+      headerRight: () => (
+        <TouchableOpacity onPress={() => {
+          if (user) {
+            navigation.navigate('Profile'); // Chuyển đến màn hình profile
+          }
+        }}>
+          {user.is_staff ?(
+            <Avatar.Image
+            size={35}
+            source={require('./images/2.png')}
+            style={{ marginRight: 10 }}
+            />
+          ): (
+            <Avatar.Image
+              size={35}
+              source={{ uri: user.account.avatar }}
+              style={{ marginRight: 10 }}
+            />
+          )}
+        </TouchableOpacity>
+      )
+      })}>
+      <Stack.Screen name="OutlineApprove" component={ApproveOutline} options={{ headerTitleAlign: "center", title: "Đề Cương Cần Xét Duyệt"}} />
+      <Stack.Screen name="Profile" component={Profile} options={{ headerTitleAlign: "center", title: "Thông Tin Tài Khoản"}} /> 
     </Stack.Navigator>
   );
 }
 
 const MyStackAdminAccount = () => {
+  const user = useContext(MyUserContext);
   return (
     <Stack.Navigator
-    initialRouteName="admin">
-      <Stack.Screen name="Account" component={Account} options={{ headerTitleAlign: "center", title: "Tài Khoản Giảng Viên Cần Xét Duyệt"}} /> 
-    
+    initialRouteName="admin"
+    screenOptions={({navigation}) => ({
+      headerRight: () => (
+        <TouchableOpacity onPress={() => {
+          if (user) {
+            navigation.navigate('Profile'); // Chuyển đến màn hình profile
+          }
+        }}>
+          { user.is_staff ?(
+            <Avatar.Image
+            size={35}
+            source={require('./images/2.png')}
+            style={{ marginRight: 10 }}
+            />
+          ): (
+            <Avatar.Image
+              size={35}
+              source={{ uri: user.account.avatar }}
+              style={{ marginRight: 10 }}
+            />
+          )}
+        </TouchableOpacity>
+      )
+      })}
+    >
+      <Stack.Screen name="Account" component={Account} options={{ headerTitleAlign: "center", title: "Tài Khoản Cần Xét Duyệt"}} /> 
+      <Stack.Screen name="Profile" component={Profile} options={{ headerTitleAlign: "center", title: "Thông Tin Tài Khoản"}} /> 
     </Stack.Navigator>
   );
 }
 
-const MyStackAdminApprove = () => {
+const MyStackAdminProvide = () => {
+  const user = useContext(MyUserContext);
   return (
     <Stack.Navigator
-    initialRouteName="admin">
-      <Stack.Screen name="Approval" component={Approval} options={{ headerTitleAlign: "center", title: "Danh Sách Phiếu Yêu Cầu"}} /> 
-    
+    initialRouteName="admin"
+    screenOptions={({navigation}) => ({
+      headerRight: () => (
+        <TouchableOpacity onPress={() => {
+          if (user) {
+            navigation.navigate('Profile'); // Chuyển đến màn hình profile
+          }
+        }}>
+          { user.is_staff ?(
+            <Avatar.Image
+            size={35}
+            source={require('./images/2.png')}
+            style={{ marginRight: 10 }}
+            />
+          ): (
+            <Avatar.Image
+              size={35}
+              source={{ uri: user.account.avatar }}
+              style={{ marginRight: 10 }}
+            />
+          )}
+        </TouchableOpacity>
+      )
+      })}
+    >
+      <Stack.Screen name="Provide" component={ProvideAccount} options={{ headerTitleAlign: "center", title: "Cung Cấp Tài Khoản"}} /> 
+      <Stack.Screen name="Profile" component={Profile} options={{ headerTitleAlign: "center", title: "Thông Tin Tài Khoản"}} /> 
     </Stack.Navigator>
   );
 }
 
-const MyStackLoginSV = () => {
-  return (
-    <Stack.Navigator
-    initialRouteName="admin">
-      <Stack.Screen name="Register" component={Approve} options={{ headerTitleAlign: "center", title: "Yêu Cầu Xét Duyệt TK Sinh Viên"}} /> 
-    
-    </Stack.Navigator>
-  );
-}
 
 const MyStackProfile = () => {
   return (
@@ -182,48 +299,33 @@ const MyStackProfile = () => {
   );
 }
 
-const MyStackLogout = () => {
-  return (
-    <Stack.Navigator
-    initialRouteName="admin">
-      <Stack.Screen name="Profile" component={Profile} options={{ headerTitleAlign: "center", title: "Thông Tin Tài Khoản"}} /> 
-      <Stack.Screen name="UpdateAccount" component={UpdateAccount} options={{ headerTitleAlign: "center", title: "Cập Nhập Tài Khoản User"}} /> 
-    </Stack.Navigator>
-  );
-}
-
 const Tab = createBottomTabNavigator();
 const MyTab = () => {
   const user = useContext(MyUserContext);
   return (
-    <Tab.Navigator>
+    <Tab.Navigator >
 
       {user===null ? <>
         <Tab.Screen name="Login" component={MyStackLogin} 
-            options={{title: "Đăng nhập, Đăng ký", 
-            tabBarIcon: () => <Icon source="login" size={30}  color="gray" />, headerShown: false}} />
+            options={{title: "Trang Chủ", 
+            tabBarIcon: () => <Icon source="home" size={30}  color="gray" />, headerShown: false}} />
             
-        <Tab.Screen name="Register" component={MyStackLoginSV}
-          options={{title:'Yêu cầu tài khoản',
-            tabBarIcon: () => <Icon source="account-group" size={30} color="gray"/>, headerShown: false}} />
-
       </>: user.is_staff ? <>
+        <Tab.Screen name="Lesson" component={MyStackLessonAdmin} 
+          options={{title: "Môn học", 
+          tabBarIcon: () => <Icon source="book-open-variant" size={30} color="gray" />, headerShown: false}} />
 
         <Tab.Screen name="Admin" component={MyStackAdminOutline} 
           options={{title: "Đề cương", 
           tabBarIcon: () => <Icon source="bookshelf" size={30} color="gray" />,headerShown: false}} />
 
+        <Tab.Screen name="Provide" component={MyStackAdminProvide} 
+          options={{ headerTitleAlign: "center", title: "Cung Cấp", 
+          tabBarIcon: () => <Icon source="account-multiple-plus" size={30} color="gray" />,headerShown: false}} />
+
         <Tab.Screen name="Account" component={MyStackAdminAccount} 
-          options={{ headerTitleAlign: "center", title: "Giảng Viên", 
-          tabBarIcon: () => <Icon source="account" size={30} color="gray" />,headerShown: false}} />
-
-        <Tab.Screen name="Approval" component={MyStackAdminApprove} 
-          options={{ headerTitleAlign: "center", title: "Sinh Viên", 
-          tabBarIcon: () => <Icon source="account-group" size={30} color="gray" />,headerShown: false}} />
-
-        <Tab.Screen name="Profile" component={Profile} 
-          options={{title: "Đăng xuất", 
-          tabBarIcon: () => <Icon source="logout" size={30} color="gray" />,headerShown: false}} />
+          options={{ headerTitleAlign: "center", title: "Xét Duyệt", 
+          tabBarIcon: () => <Icon source="bell-alert" size={30} color="gray" />,headerShown: false}} />
 
       </>: user.avatar === null ? <>
 
@@ -232,18 +334,14 @@ const MyTab = () => {
           tabBarIcon: () => <Icon source="update" size={30} color="gray" />,headerShown: false}} />
 
       </>: <>
-        <Tab.Screen name="Home" component={MyStackLesson} 
+      
+      <Tab.Screen name="Home" component={MyStackLesson} 
           options={{title: "Danh mục môn học", 
           tabBarIcon: () => <Icon source="home" size={30} color="gray" />, headerShown: false}} />
-
+          
         <Tab.Screen name="Outline" component={MyStackOutline} 
           options={{title: "Danh mục đề cương", 
           tabBarIcon: () => <Icon source="book-outline" size={30} color="gray" />,  headerShown: false}} />
-
-        <Tab.Screen name="Profile" component={MyStackLogout} 
-          options={{title: "Đăng xuất", 
-          tabBarIcon: () => <Icon source="logout" size={30} color="gray" />,headerShown: false}} />
-
       </>}
     </Tab.Navigator>
     
@@ -252,9 +350,7 @@ const MyTab = () => {
 
 
 const App = () => {
-    
   const [user, dispatch] = useReducer(MyUserReducer, null);
-
   return (
     <NavigationContainer>
       <MyUserContext.Provider value={user}>

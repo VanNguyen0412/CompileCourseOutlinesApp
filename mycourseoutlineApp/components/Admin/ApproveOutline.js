@@ -30,6 +30,7 @@ const ApproveOutline = () => {
         try {
             let res = await APIs.get(endpoints['noapprove-outline']);
             setOutlineNoApprove(res.data);
+            
         } catch (ex) {
             console.error(ex);
         } finally {
@@ -75,6 +76,7 @@ const ApproveOutline = () => {
                     <View style={styleAdmin.commentContent}>
                         <View style={{flex: 3}}>
                             <Text style={styleAdmin.fullName}>{oa.name}</Text>
+                            <Text style={styleAdmin.createdDate}>Môn học: {oa.lesson.subject}</Text>
                             <Text style={styleAdmin.createdDate}>{moment(oa.created_date).format('Do MMMM, YYYY')}</Text>
                         </View>
                         <Button mode="contained" 

@@ -1,10 +1,12 @@
 import { StyleSheet } from "react-native";
 
 export default StyleSheet.create({
-    container: {
+    container1: {
         flexGrow: 1,
         backgroundColor: '#f2f2f2',
         padding: 4,
+        alignItems: "center",
+        marginTop: 130
     },
     image: {
         width: '100%',
@@ -90,15 +92,7 @@ export default StyleSheet.create({
         textAlign: 'center',
         fontWeight: 'bold',
     }, 
-    dropdownContainer: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5,
-        backgroundColor: 'rgb(233, 223, 235)',
-        margin: 5,
-        marginLeft: 12,
-        width: "80%"
-    },
+    
     resetButton: {
         padding: 10,
         alignItems: 'center',
@@ -119,10 +113,7 @@ export default StyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'space-between', // Optional: Adjust based on your layout needs
     },
-    dropdownWrapper: {
-      flex:1,
-      marginVertical: 10,
-    },
+    
     gridItem: {
         width: '25%',
         marginLeft: 5,
@@ -204,24 +195,29 @@ export default StyleSheet.create({
     menuAnchor: {
         justifyContent: 'center',
     },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 10,
+    
+    inputContainer1: {
+        backgroundColor: '#e8e8e8',
+        borderRadius: 10,
     },
     textInput: {
         flex: 1,
         marginRight: 7,
         backgroundColor: '#fff',
-        borderRadius: 10,
+        borderRadius: 5,
+        borderWidth: 0.5,
+        borderBlockColor: "#fff",
         padding: 7.5,
-        fontSize: 16,
+        fontSize: 17,
+        height: 50
+
     },
     addButton: {
         borderRadius: 10,
         paddingVertical: 6,
+        borderWidth: 0.5,
         paddingHorizontal: 12,
-       
+       height: 53
     },
     addButton1: {
         color: '#9370db',
@@ -386,6 +382,61 @@ export default StyleSheet.create({
     fieldContainerCO: {
         marginBottom: 15,
     },
-
-    
+    container: {
+        flexGrow: 1,
+        backgroundColor: '#f2f2f2',
+        padding: 4,
+    },
+    headercontainer: {
+        height: 170,
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        padding: 15,
+        margin: 10
+      },
+      inputContainer: {
+        backgroundColor: '#f1f1f1',
+        borderRadius: 5,
+        height: 40,
+      },
+      inputContainerNow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 10,
+        
+      },
+      input: {
+        color: '#333',
+        fontSize: 16,
+      },
+      dropdownWrapper: {
+        flex: 2,
+        marginLeft: 12,
+        marginRight: 12,
+        height: 40,
+        backgroundColor: 'transparent',
+        borderWidth: 0,
+        width: "100%"
+      },
+      dropdownContainer: {
+        backgroundColor: '#f1f1f1',
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        margin: 5,
+        width: "100%"
+      },
+      addoutline: {
+        justifyContent: "center", 
+        width: "100%", 
+        flex: 1, 
+        borderWidth: 0.5,
+        borderRadius: 5,
+        height:50, 
+        marginTop: 5,
+        marginRight: 15,
+        borderColor: '#696969',
+      }
+      
+      
 });

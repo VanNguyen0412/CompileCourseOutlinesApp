@@ -28,7 +28,79 @@ class CourseViewSet(viewsets.ViewSet, generics.ListAPIView):
     serializer_class = serializers.CourseSerializer
 
 
-class LessonViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView):
+class LecturerViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
+    queryset = Lecturer.objects.all()
+    serializer_class = serializers.LecturerSerializer
+
+    def get_permissions(self):
+        if self.action in ['provide_account']:
+            return [perms.IsAdminPerms()]
+        return [permissions.AllowAny()]
+
+    def get_queryset(self):
+        return Lecturer.objects.filter(account_id__isnull=True)
+
+    @action(methods=['post'], url_path='provide', detail=True, permission_classes=[IsAdminUser])
+    def provide_account(self, request, pk):
+        lecturer = self.get_object()
+        info=[]
+        info.append(lecturer.first_name)
+        info.append(lecturer.last_name)
+        info.append(lecturer.code)
+        info.append(lecturer.position)
+        info.append(lecturer.age)
+        self.send_approval_email(lecturer.email, info)
+
+        return Response(data={'message': f'Thông tin của giảng viên {lecturer.last_name} đã được cung cấp.'},
+                        status=status.HTTP_200_OK)
+
+    def send_approval_email(self, to_email, info):
+        subject = 'Thông tin tài khoản của bạn'
+        message = (
+            f'Tài khoản của bạn {info[1]} đã được quản trị viên cung cấp. Bạn có thể đăng ký và sử dụng các dịch vụ.'
+            f' Với thông tin sau: Họ và tên lót: {info[0]}, Tên: {info[1]}, mã số: {info[2]}, chức danh: {info[3]}, tuổi: {info[4]} .')
+
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [to_email]
+        send_mail(subject, message, email_from, recipient_list)
+
+
+class StudentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
+    queryset = Student.objects.all()
+    serializer_class = serializers.StudentSerializer
+
+    def get_permissions(self):
+        if self.action in ['provide_account']:
+            return [perms.IsAdminPerms()]
+        return [permissions.AllowAny()]
+
+    def get_queryset(self):
+        return Student.objects.filter(account_id__isnull=True)
+
+    @action(methods=['post'], url_path='provide', detail=True, permission_classes=[IsAdminUser])
+    def provide_account(self, request, pk):
+        student = self.get_object()
+        info = []
+        info.append(student.first_name)
+        info.append(student.last_name)
+        info.append(student.code)
+        self.send_approval_email(student.email, info)
+
+        return Response(data={'message': f'Thông tin của sinh viên {student.last_name} đã được cung cấp.'},
+                        status=status.HTTP_200_OK)
+
+    def send_approval_email(self, to_email, info):
+        subject = 'Thông tin tài khoản của bạn'
+        message = (
+            f'Tài khoản của bạn ({info[1]}) đã được quản trị viên cung cấp. Bạn có thể đăng ký và sử dụng các dịch vụ.'
+            f'Với thông tin sau: Họ và tên lót: {info[0]}, Tên: {info[1]}, mã số: {info[2]}.')
+
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [to_email]
+        send_mail(subject, message, email_from, recipient_list)
+
+
+class LessonViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView, generics.DestroyAPIView):
     queryset = Lesson.objects.filter(active=True)
     serializer_class = serializers.LessonSerializer
     pagination_class = paginators.ItemPaginator
@@ -46,23 +118,26 @@ class LessonViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPI
         return queryset
 
     def get_permissions(self):
-        if self.action in ['create_lesson', 'add_course']:
+        if self.action in ['create_lesson', 'add_course', 'destroy']:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
-    @action(methods=['post'], url_path='create', detail=False)
-    def create_lesson(self, request):
-        if not request.user.is_lecturer():
-            return Response({"error": "Only lecturers can create lessons."},
-                            status=status.HTTP_403_FORBIDDEN)
-        lecturer = request.user.get_lecturer_profile()
+    def destroy(self, request, *args, **kwargs):
+        try:
+            lesson = self.get_object()
+        except Lesson.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
+        lesson.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(methods=['post'], url_path='create', detail=False, permission_classes=[IsAdminUser])
+    def create_lesson(self, request):
         mutable_data = request.data.copy()
-        mutable_data['lecturer'] = lecturer.id
 
         serializer = serializers.LessonCreateSerializer(data=mutable_data)
         if serializer.is_valid():
-            serializer.save(lecturer=lecturer)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -77,45 +152,31 @@ class LessonViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPI
         return Response(serializers.OutlineSerializer(outlines, many=True).data,
                         status=status.HTTP_200_OK)
 
-    @action(methods=['get'], url_path='courses', detail=True)
-    def get_courses_for_lesson(request, self, pk):
-        try:
-            lesson = Lesson.objects.get(id=pk)
-            courses = lesson.course_set.all()  # Lấy tất cả các khóa học liên quan đến bài học
-            serializer = serializers.CourseSerializer(courses, many=True)
-            return Response(serializer.data)
-        except Lesson.DoesNotExist:
-            return Response({'error': 'Lesson not found'}, status=404)
-
-    @action(methods=['post'], url_path='add_course', detail=True)
-    def add_course(self, request, pk):
-        lesson = self.get_object()
-        year = request.data.get('year')
-
-        # Kiểm tra xem người dùng là giảng viên hay không
-        if not request.user.is_lecturer():
-            return Response({"error": "Only lecturers can add course."},
-                            status=status.HTTP_403_FORBIDDEN)
-
-        # Lấy thông tin giảng viên hiện đang đăng nhập
-        lecturer = request.user.get_lecturer_profile()
-
-        if lesson.lecturer != request.user.get_lecturer_profile():
-            return Response({"error": "You can only add course to lessons you have created."},
-                            status=status.HTTP_403_FORBIDDEN)
-
-            # Get or create the course
-        course, created = Course.objects.get_or_create(year=year)
-
-        # Add the lesson to the course if not already added
-        if lesson not in course.lessons.all():
-            course.lessons.add(lesson)
-            course.save()
-
-        # Serialize the course data
-        serializer = serializers.CourseSerializer(course)
-
+    @action(methods=['get'], detail=False, url_path='with-outlines')
+    def get_lessons_with_outlines(self, request):
+        lessons = self.get_queryset().filter(outline__isnull=False).distinct()
+        serializer = self.get_serializer(lessons, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='without-outlines')
+    def get_lessons_without_outlines(self, request):
+        lessons = self.get_queryset().filter(outline__isnull=True)
+        serializer = self.get_serializer(lessons, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class LessonNameViewSet(viewsets.ViewSet, generics.ListAPIView):
+    queryset = Lesson.objects.filter(active=True)
+    serializer_class = serializers.LessonSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        q = self.request.query_params.get('q')
+        if q:
+            queryset = queryset.filter(subject__icontains=q)
+
+        return queryset
 
 
 class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -126,7 +187,7 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
     def get_permissions(self):
         if self.action in ['add_comment', 'add_evaluation', 'create_outline', 'add_course', 'update_outline']:
             return [IsAuthenticated()]
-        elif self.action in ['update', 'partial_update']:
+        elif self.action in ['update', 'partial_update', 'create_outline']:
             return [IsAuthenticated(), perms.IsLecturerAndOwner()]
         return [permissions.AllowAny()]
 
@@ -161,7 +222,7 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
 
             lecturer = self.request.query_params.get('lecturer')  # tìm đề cương theo tên giảng viên
             if lecturer:
-                queryset = queryset.filter(lecturer__lastpyp_name__icontains=lecturer)
+                queryset = queryset.filter(lecturer__last_name__icontains=lecturer)
 
             course = self.request.query_params.get('course')  # tìm đề cương theo khóa học
             if course:
@@ -209,21 +270,19 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
         if not request.user.is_student():
             raise PermissionDenied("Only students can add comments.")
 
-        # Lấy thông tin sinh viên hiện đang đăng nhập từ đối tượng request.user
-
-        student = request.user.get_student_profile()
-
         outline = self.get_object()
-        mutable_data = request.data.copy()
+        student = request.user.get_student_profile()  # Assuming the student is accessible from the user model
 
-        # Thêm trường student vào dữ liệu request trước khi tạo comment
-        mutable_data['student'] = student.id
-        # Tạo một serializer mới và truyền đối tượng Student vào trường student
-        serializer = serializers.AddCommentSerializer(data=mutable_data)
+        # Create a new comment
+        data = {
+            'content': request.data.get('content'),
+        }
+
+        serializer = serializers.AddCommentSerializer(data=data)
         if serializer.is_valid():
-            # Lưu comment với đối tượng Student đã được tạo
             serializer.save(outline=outline, student=student)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            response_serializer = serializers.CommentSerializer(serializer.instance)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['post'], url_path='evaluation', detail=True)
@@ -481,7 +540,7 @@ class OutlineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
 
     @action(methods=['get'], url_path='noapprove', detail=False)
     def outline_noapprove(self, request):
-        # Lấy danh sách các đề cương đã được xét duyệt
+        # Lấy danh sách các đề cương chưa được xét duyệt
         approved_outlines = self.queryset.filter(is_approved=False)
         serializer = self.get_serializer(approved_outlines, many=True)
         return Response(serializer.data)

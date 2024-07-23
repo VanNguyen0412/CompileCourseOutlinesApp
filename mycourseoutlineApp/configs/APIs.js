@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = 'http://192.168.1.4:8000/';
+const BASE_URL = 'http://192.168.1.14:8000/';
 
 export const endpoints = {
     'categories': '/categories/',
@@ -11,10 +11,12 @@ export const endpoints = {
     'outline-create': '/outlines/create/',
     'outline-update': (outlineId) => `/outlines/${outlineId}/update/`,
     'lesson-details': (lessonId) => `/lessons/${lessonId}/`,
-    'lesson-course': (lessonId) => `/lessons/${lessonId}/courses/`,
+    'lesson-delete': (lessonId) => `/lessons/${lessonId}/`,
     'lesson-outline': (lessonId) => `/lessons/${lessonId}/outlines/`,
+    'lesson-hasoutline': '/lessons/with-outlines/',
+    'lesson-nooutline': '/lessons/without-outlines/',
+    'lesson-name': '/lessonname/',
     'lesson-create': '/lessons/create/',
-    'lesson-addcourse': (lessonId) => `/lessons/${lessonId}/add_course/`,
     'login': '/o/token/',
     'current-account': '/accounts/current-account/',
     'add-comment': (outlineId) => `/outlines/${outlineId}/comments/`,
@@ -37,6 +39,12 @@ export const endpoints = {
     'update-account': (accountId) => `/accounts/${accountId}/update/`,
     'lecturer': (accountId) => `/lecturer/${accountId}/accounts/`,
     'student': (accountId) => `/student/${accountId}/accounts/`,
+    'lecturer-account': '/lecturers/',
+    'lecturer-account-detail': (lecturerId) => `/lecturers/${lecturerId}/`,
+    'provide-lecturer': (lecturerId) => `/lecturers/${lecturerId}/provide/` ,
+    'student-account': '/students/',
+    'provide-student': (studentId) => `/students/${studentId}/provide/`,
+    'student-account-detail': (studentId) => `/students/${studentId}/`,
 };
 
 export const authApi = (token) => {

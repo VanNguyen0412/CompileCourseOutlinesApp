@@ -100,11 +100,11 @@ class Evaluation(BaseModel):
 
 class Lecturer(User):
     position = models.CharField(max_length=255)
+    email = models.CharField(max_length=255)
 
 
 class Lesson(BaseModel):
     subject = models.CharField(max_length=255)
-    lecturer = models.ForeignKey(Lecturer, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
 
     def __str__(self):
@@ -133,6 +133,7 @@ class Outline(BaseModel):
 
 
 class Student(User):
+    email = models.CharField(max_length=255)
     course = models.ForeignKey(Course, null=True, blank=True, on_delete=models.PROTECT)
     lessons = models.ManyToManyField(Lesson, blank=True)
     outline = models.ManyToManyField(Outline, blank=True)
@@ -158,4 +159,3 @@ class Chat(BaseModel):
 class Approval(BaseModel):
     is_approved = models.BooleanField(default=False)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, unique=True)
-

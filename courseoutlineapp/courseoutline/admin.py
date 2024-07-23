@@ -61,7 +61,7 @@ class EvaluationAdmin(admin.ModelAdmin):
 
 
 class LessonAdmin(admin.ModelAdmin):
-    list_display = ['id', 'subject', 'lecturer', 'active', 'created_date']
+    list_display = ['id', 'subject', 'active', 'created_date']
     search_fields = ['subject']
     list_filter = ['subject']
 
@@ -79,9 +79,12 @@ class CommentAdmin(admin.ModelAdmin):
 class CourseAdmin(admin.ModelAdmin):
     list_display = ['id', 'year']
 
+class AccountAdmin(admin.ModelAdmin):
+    list_display = ['id', 'username']
 
 admin_site.register(Course, CourseAdmin)
 admin_site.register(Category)
+admin_site.register(Account, AccountAdmin)
 admin_site.register(Outline, OutlineAdmin)
 admin_site.register(Lesson, LessonAdmin)
 admin_site.register(Lecturer, LecturerAdmin)

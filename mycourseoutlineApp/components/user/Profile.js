@@ -31,7 +31,7 @@ const Profile = () => {
         <Card>
             <View style={styles.header1}>
               {user.avatar === null ? <>
-                <Image source={require('./images/a.jpg')} style={styles.avatar}
+                <Image source={require('./images/2.png')} style={styles.avatar}
               />
               </>:<>
                 <Image source={{ uri: user.avatar }} style={styles.avatar} />
@@ -61,7 +61,7 @@ const Profile = () => {
       <Card>
             <View style={styles.header1}>
               {user.account.avatar === null ? <>
-                <Image source={require('./images/a.jpg')} style={styles.avatar}
+                <Image source={require('./images/2.png')} style={styles.avatar}
               />
               </>:<>
                 <Image source={{ uri: user.account.avatar }} style={styles.avatar} />

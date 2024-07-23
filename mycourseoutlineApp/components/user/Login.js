@@ -8,6 +8,8 @@ import { MyDispatchContext } from "../../configs/Context";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from "./styles";
 import { FontAwesome } from "@expo/vector-icons";
+import { ImageBackground } from "react-native";
+import { Image } from "react-native-elements";
 
 const Login = () => {
     const [user, setUser] = useState({});
@@ -93,7 +95,11 @@ const Login = () => {
     }
 
     return (
-        <View style={[MyStyle.container, MyStyle.margin]}>
+        <ImageBackground style={[ MyStyle.container, MyStyle.margin]} 
+                source={require('./images/1.jpg')}>
+            <View style={[{marginTop: 20, alignItems: 'center', justifyContent: 'center', }]}>
+            <Image source={require('./images/2.png')} style={MyStyle.logo} />
+            </View>
             {fields.map(f => 
             <View style={styles.fieldContainerCO}>
                 <View style={styles.inputContainerCO}>
@@ -107,7 +113,7 @@ const Login = () => {
                         secureTextEntry={f.secureTextEntry} 
                      />
                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                     <FontAwesome name={showPassword ? f.icon1 : f.icon2}  size={20} color="black" />
+                        <FontAwesome name={showPassword ? f.icon1 : f.icon2}  size={25} color="black" />
                      </TouchableOpacity>
                      
                 </View>
@@ -117,7 +123,7 @@ const Login = () => {
                     <Text style={[MyStyle.hihi]}>Giảng viên chưa có tài khoản, hãy đăng ký!!!</Text>
                 </TouchableOpacity>
                 <Button style={MyStyle.margin} loading={loading} icon="account" mode="contained" onPress={login} >ĐĂNG NHẬP</Button>
-        </View>
+        </ImageBackground>
     );
 }
 export default Login;

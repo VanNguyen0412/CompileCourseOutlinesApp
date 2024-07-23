@@ -138,7 +138,7 @@ class StudentNameSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Student
-        fields = ['first_name', 'last_name', 'full_name', 'account', 'age', 'gender', 'code', 'avatar']
+        fields = ['id', 'first_name', 'last_name', 'full_name', 'account', 'age', 'gender', 'code', 'avatar']
 
     def get_full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}"
@@ -179,18 +179,20 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'code', 'first_name', 'last_name', 'age', 'gender', 'created_date', 'updated_date']
+        read_only_fields = ['id', 'created_date', 'updated_date']
 
 
 class StudentSerializer(UserSerializer):
     class Meta:
         model = Student
-        fields = UserSerializer.Meta.fields
+        fields = UserSerializer.Meta.fields + ['email', 'account_id']
 
 
 class LecturerSerializer(UserSerializer):
     class Meta:
         model = Lecturer
-        fields = UserSerializer.Meta.fields + ['position', 'account_id']
+        fields = UserSerializer.Meta.fields + ['position', 'email', 'account_id']
+        read_only_fields = ['account_id']
 
 
 class ApprovalSerializer(AccountSerializer2):
@@ -247,13 +249,12 @@ class OutlineSerializer(serializers.ModelSerializer):
 
 
 class LessonSerializer(serializers.ModelSerializer):
-    lecturer = LecturerNameSerializer()
     category = CategorySerializer()
-    courses = CourseSerializer(many=True, read_only=True)
+    outline = OutlineSerializer(many=True, read_only=True)
 
     class Meta:
         model = Lesson
-        fields = ['id', 'subject', 'created_date', 'updated_date', 'lecturer', 'category', 'courses']
+        fields = ['id', 'subject', 'created_date', 'updated_date', 'category', 'outline']
         read_only_fields = ['lecturer', 'created_date', 'updated_date']
 
 

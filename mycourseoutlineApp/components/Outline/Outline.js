@@ -1,5 +1,5 @@
-import { Alert, RefreshControl, Text, View } from "react-native";
-import { ActivityIndicator, AnimatedFAB, Chip, List, Provider } from "react-native-paper";
+import { Alert, RefreshControl, Text, View, TextInput } from "react-native";
+import { ActivityIndicator, Provider } from "react-native-paper";
 import MyStyle from "../../styles/MyStyle";
 import { useContext, useEffect, useState } from "react";
 import APIs, { endpoints } from "../../configs/APIs";
@@ -7,11 +7,11 @@ import { MyUserContext } from "../../configs/Context";
 import { ScrollView } from "react-native";
 import { Button, Card, Icon, Image, SearchBar } from "react-native-elements";
 import styles from "./styles";
-import { TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import DropDownPicker from "react-native-dropdown-picker";
 import moment from "moment";
-import { color } from "react-native-elements/dist/helpers";
+import DropDownPicker from "react-native-dropdown-picker";
+import { FontAwesome } from "@expo/vector-icons";
+import { TouchableOpacity } from "react-native";
 
 const Outline = () => {
     const [outlines, setOutlines] = useState([]);
@@ -42,12 +42,12 @@ const Outline = () => {
     ]);
     
     const loadOutline = async () =>{
+        setLoading(true);
         if(page > 0){
             let url = `${endpoints['outlines']}?page=${page}`;
             if (value && query) {
                 url += `&${value}=${query}`;
             }
-            setLoading(true);
             try{
                 let res = await APIs.get(url);
                 if (res.data.next === null)
@@ -63,18 +63,18 @@ const Outline = () => {
                 console.error(ex);
             }finally{
                 setLoading(false);
-        }
+            }
         }
     };
 
     const onRefresh = async () => {
         setRefreshing(true);
+        setLoading(true);
         if(page > 0){
             let url = `${endpoints['outlines']}?page=${page}`;
             if (value && query) {
                 url += `&${value}=${query}`;
             }
-            setLoading(true);
         try{
             let res = await APIs.get(url);
             if (res.data.next === null)
@@ -90,6 +90,7 @@ const Outline = () => {
             console.error(ex);
         } finally {
             setRefreshing(false);
+            setLoading(false);
         }
     }
     };
@@ -123,39 +124,35 @@ const Outline = () => {
 
     return (
         <Provider>
-            <View >
-                <SearchBar placeholder="Nhập từ khóa..." 
-                            onChangeText={search} value={query}
-                            containerStyle={MyStyle.searchContainer}
-                            inputContainerStyle={MyStyle.inputContainer}
-                            inputStyle={MyStyle.input}
-                />
-            </View>
-            <View style={[styles.row]}>
+            <View style={styles.container}>
+                <SearchBar
+                    placeholder="Nhập từ khóa..." 
+                    onChangeText={search} value={query}
+                    containerStyle={MyStyle.searchContainer}
+                    inputContainerStyle={MyStyle.inputContainer}
+                    inputStyle={MyStyle.input}
+                    />
+            
+            <View style={[{ height: 60, zIndex: 1000 , flexDirection: 'row'}]}>
                 <DropDownPicker
-                        style={styles.dropdownContainer}
-                        open={open}
-                        value={value}
-                        items={filter}
-                        setOpen={setOpen}
-                        setValue={setValue}
-                        setItems={setFilter}
-                        placeholder="Chọn loại..."
-                        containerStyle={styles.dropdownWrapper}
-                /> 
-                {userRole === 'lecturer'?(
-                        
-                    <View style={styles.gridItem}>
-                        <TouchableOpacity onPress={() => {nav.navigate('CreateOutline')}} style={styles.imageContainer}>
-                            <Image style={styles.imageAdd}  source={require('./images/category.jpg')} />
-                            <View style={styles.overlay}>
-                                <Text style={ styles.name}>Thêm</Text>
-                            </View>
-                        </TouchableOpacity>
-                    </View>
-                ):null} 
-               
+                    style={styles.dropdownContainer}
+                    open={open}
+                    value={value}
+                    items={filter}
+                    setOpen={setOpen}
+                    setValue={setValue}
+                    setItems={setFilter}
+                    placeholder="Chọn loại..."
+                    containerStyle={styles.dropdownWrapper}
+                />
+                <View style={styles.addoutline}>
+                    <TouchableOpacity onPress={() => {nav.navigate('CreateOutline', { 'lessonId': 0 })}} >
+                        <FontAwesome name='plus'  size={22} color="black" style={{textAlign: "center"}} />
+                        <Text style={{textAlign: "center"}}>Thêm</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
+            
              
            <ScrollView  onScroll={loadMore} style={{ flex: 1 }}
                     refreshControl={
@@ -188,16 +185,7 @@ const Outline = () => {
               </View>
             ))}
             </ScrollView>
-            {/* <AnimatedFAB
-                icon={"plus"}
-                label={"Add complaint"}
-                // extended={isExtended}
-                onPress={() => nav.navigate("CreateOutline")}
-                // visible={visible}
-                animateFrom={"right"}
-                iconMode={"static"}
-                style={[styles.fabStyle]}
-            /> */}
+            </View>
         </Provider>
     );
 };

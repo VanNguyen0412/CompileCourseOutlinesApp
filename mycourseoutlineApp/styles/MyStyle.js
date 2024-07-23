@@ -1,4 +1,6 @@
 import { StyleSheet } from "react-native";
+import { Dimensions } from 'react-native';
+const { width: viewportWidth, height: viewportHeight } = Dimensions.get('window');
 
 export default StyleSheet.create({
     container: {
@@ -29,7 +31,7 @@ export default StyleSheet.create({
     }, 
     row: {
         flexDirection: "row",
-        justifyContent: 'space-between',
+        // justifyContent: 'space-between',
         alignItems: 'center',
     }, 
     wrap: {
@@ -37,8 +39,8 @@ export default StyleSheet.create({
     }, 
     margin: {
         margin: 5,
-        marginLeft: 10,
-        marginRight: 10
+        marginLeft: 7,
+        marginRight: 7
     }, 
     avatar: {
         width: 80,
@@ -67,6 +69,7 @@ export default StyleSheet.create({
         fontWeight: 'bold',
         marginVertical: 8,
         color: '#5f9ea0',
+        textAlign:"center"
     },
     paragraph: {
         fontSize: 16,
@@ -106,14 +109,22 @@ export default StyleSheet.create({
         width: 150
     },
     searchContainer: {
-        width: '100%',
+        width: '95%',
+        alignSelf: "center",
         backgroundColor: 'transparent',
         borderTopWidth: 0,
         borderBottomWidth: 0,
     },
+    searchLessonContainer: {
+        width: '100%',
+        backgroundColor: 'transparent',
+        borderTopWidth: 0,
+        borderBottomWidth: 0,
+        flex: 4,
+    },
     inputContainer: {
         backgroundColor: '#f9f9f9',
-        borderRadius: 10,
+        borderRadius: 3,
         borderWidth: 1,
         borderColor: '#ddd',
         shadowColor: '#000',
@@ -140,15 +151,16 @@ export default StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
-        paddingHorizontal: 10,
+        marginTop: 7,
     },
     gridItem: {
-        width: '47%',
-        marginBottom: 20,
-        // marginLeft: 10
+        width: '30%',
+        alignSelf: "center",
+        alignItems: "center",
+        flex: 1, 
     },
     imageContainer: {
-        borderRadius: 15,
+        borderRadius: 10,
         overflow: 'hidden',
         backgroundColor: '#fff',
         shadowColor: '#000',
@@ -237,8 +249,81 @@ export default StyleSheet.create({
         width: '100%',
         paddingHorizontal: 10,
     },
-    // button: {
-    //     marginVertical: 10,
-    //     width: '100%',
-    // },
+    imageBanner: {
+        width: '100%',
+        height: 200,
+        resizeMode: 'cover',
+    },
+    indicatorContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        // position: 'absolute',
+        bottom: 20,
+        width: '100%',
+    },
+    indicator: {
+        height: 10,
+        width: 10,
+        borderRadius: 5,
+        backgroundColor: '#fff',
+        marginLeft: 7,
+    },
+    leftArrow: {
+        position: 'absolute',
+        left: 10,
+        top: '50%',
+        zIndex: 1,
+        transform: [{ translateY: -15 }],
+    },
+    rightArrow: {
+        position: 'absolute',
+        right: 10,
+        top: '50%',
+        zIndex: 1,
+        transform: [{ translateY: -15 }],
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 3,
+        right: 7,
+        padding: 10,
+    },
+    closeButtonText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    inputCO: {
+        height: 50,
+        borderColor: '#ddd',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        backgroundColor: '#fff',
+        fontSize: 16,
+        color: '#333',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+
+    },
+    logo: {
+        width: 120,
+        height: 120,
+        borderRadius: 15,
+        marginBottom: 16,
+    },
+    title1: {
+        fontSize: 30,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 10,
+    },
+    subtitle1: {
+        fontSize: 18,
+        color: '#808080',
+        marginBottom: 16,
+    },
 }); 

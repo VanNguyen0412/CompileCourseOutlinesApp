@@ -1,53 +1,48 @@
-import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Alert, Image } from "react-native";
+import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Alert, Image, TextInput, TouchableOpacity, ImageBackground } from "react-native";
 import MyStyle from "../../styles/MyStyle";
-import { Button, TextInput, TouchableRipple } from "react-native-paper";
+import { Button, TouchableRipple } from "react-native-paper";
 import { useState } from "react";
 import * as ImagePicker from 'expo-image-picker';
 import styles from "./styles";
 import APIs, { endpoints } from "../../configs/APIs";
 import { useNavigation } from "@react-navigation/native";
+import { FontAwesome } from "@expo/vector-icons";
 
 const Register = () => { 
-    const fields = [{
-        label: "Tên người dùng",
-        icon: "text",
-        field: "username"
-    },{
-        label: "Tên",
-        icon: "text",
-        field: "first_name"
-    },{
-        label: "Họ và tên lót",
-        icon: "text",
-        field: "last_name"
-    },{
-        label: "Email",
-        icon: "email",
-        field: "email"
-    },{
-        label: "Mã Giảng Viên",
-        icon: "account",
-        field: "code"
-    },{
-        label: "Mật khẩu",
-        icon: "eye",
-        field: "password",
-        secureTextEntry: true
-    },{
-        label: "Xác nhận mật khẩu",
-        icon: "eye",
-        field: "confirm",
-        secureTextEntry: true
-    }];
-
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [user, setUser] = useState({});
     const [loading, setLoading] = useState(false);
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const change = (value, field) => {
         setUser(current => {
             return {...current, [field]: value}
         })
     }
     const nav = useNavigation()
+
+    const fields = [{
+        label: "Tên người dùng",
+        icon: "align-left",
+        field: "username"
+    },{
+        label: "Họ và tên lót",
+        icon: "align-left",
+        field: "first_name"
+    },{
+        label: "Tên",
+        icon: "align-left",
+        field: "last_name"
+    },{
+        label: "Email",
+        icon: "envelope",
+        field: "email"
+    },{
+        label: "Mã Giảng Viên",
+        icon: "user",
+        field: "code"
+    }];
 
     const picker = async () =>{
         let {status} = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -72,7 +67,7 @@ const Register = () => {
 
         }
 
-        if(user.password !== user.confirm){
+        if(password !== confirmPassword){
             Alert.alert("ĐĂNG KÝ", "Mật khẩu xác nhận không khớp");
             return;
         }
@@ -86,7 +81,7 @@ const Register = () => {
             fromData.append('last_name', user.last_name);
             fromData.append('email', user.email);
             fromData.append('code', user.code);
-            fromData.append('password', user.password);
+            fromData.append('password', password);
             fromData.append('avatar', {
                 uri: user.avatar.uri,
                 type: 'image/jpeg',  // or appropriate type
@@ -115,11 +110,59 @@ const Register = () => {
     };
 
     return (
-        <View style={[MyStyle.container, MyStyle.margin]}>
+        <ImageBackground style={[MyStyle.container, MyStyle.margin]}
+        source={require('./images/1.jpg')} >
             <ScrollView>
+                <View style={[{marginTop: 20, alignItems: 'center', justifyContent: 'center', }]}>
+                    <Image source={require('./images/2.png')} style={MyStyle.logo} />
+                </View>
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                     
-                    {fields.map(f => <TextInput value={user[f.field]} onChangeText={t => change(t, f.field)} key={f.field} style={MyStyle.margin} label={f.label} secureTextEntry={f.secureTextEntry} right={<TextInput.Icon icon={f.icon}/>}/>)}
+                    {fields.map(f => 
+                    <View style={styles.fieldContainerCO}>
+                        <View style={styles.inputContainerCO}>
+                            <TextInput value={user[f.field]} 
+                                    onChangeText={t => change(t, f.field)} 
+                                    key={f.field} 
+                                    style={styles.inputCO} 
+                                    placeholder={f.label}
+                                    placeholderTextColor="#999"
+                                    secureTextEntry={f.secureTextEntry} 
+                                    />
+                                    <FontAwesome name={f.icon}  size={23} color="black" />
+                        </View>
+                    </View>
+                    )}
+                    <View style={styles.fieldContainerCO}>
+                        <View style={styles.inputContainerCO}>
+                            <TextInput
+                                style={styles.inputCO}
+                                value={password}
+                                onChangeText={setPassword}
+                                placeholder="Nhập Mật Khẩu"
+                                placeholderTextColor="#999"
+                                secureTextEntry={!showPassword}
+                            />
+                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                <FontAwesome name={showPassword ? 'eye-slash' : 'eye'}  size={23} color="black" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                    <View style={styles.fieldContainerCO}>
+                        <View style={styles.inputContainerCO}>
+                            <TextInput
+                                style={styles.inputCO}
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                                placeholder="Nhập Lại Mật Khẩu"
+                                placeholderTextColor="#999"
+                                secureTextEntry={!showConfirmPassword}
+                            />
+                            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                                <FontAwesome name={showConfirmPassword ? 'eye-slash' : 'eye'}  size={23} color="black" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
 
                     <TouchableRipple onPress={picker}>
                         <Text style={[MyStyle.margin, { color: 'blue' }]}>Chọn ảnh đại diện</Text>
@@ -127,10 +170,19 @@ const Register = () => {
 
                     {user.avatar && <Image source={{uri:user.avatar.uri}} style={MyStyle.avatar} />}
 
-                    <Button icon="account" mode="contained" onPress={register} loading={loading} disabled={loading} style={MyStyle.margin}>ĐĂNG KÝ</Button>
+                    <Button 
+                        icon="account" 
+                        mode="contained" 
+                        onPress={register} 
+                        loading={loading} 
+                        disabled={loading} 
+                        style={MyStyle.margin}>
+                            ĐĂNG KÝ
+                    </Button>
+                        
                 </KeyboardAvoidingView>
             </ScrollView>
-        </View>
+        </ImageBackground>
     )
 }
 
